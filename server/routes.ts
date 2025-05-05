@@ -48,8 +48,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configure Passport local strategy
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const admin = { id: 1, username: "admin", isAdmin: true };
-      return done(null, admin);
       try {
         const user = await storage.getUserByUsername(username);
         if (!user) {
@@ -893,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Middleware to check if user is authenticated
-function checkAuthenticated(req: Request, res: Response, next: NextFunction) {
+function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
