@@ -34,6 +34,7 @@ import { EventsTable } from "@/components/admin/EventsTable";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlusIcon } from "lucide-react";
 
 // Types
 interface NewsArticle {
@@ -965,7 +966,16 @@ const AdminPage = () => {
                   <p className="mt-2 text-muted-foreground">Loading events...</p>
                 </div>
               ) : (
-                <EventsTable events={events} onEdit={openEditForm} />
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-semibold">Events</h2>
+                    <Button onClick={openAddForm}>
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Add Event
+                    </Button>
+                  </div>
+                  <EventsTable events={events} onEdit={openEditForm} />
+                </div>
               )}
             </div>
           )}

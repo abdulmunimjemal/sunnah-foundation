@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { TableFilter } from "@/components/ui/table-filter";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { filterData, paginateData } from "@/lib/tableFunctions";
 import {
   Table,
   TableBody,
@@ -21,7 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ClockIcon, MapPinIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, MapPinIcon, PlusIcon } from "lucide-react";
 
 interface Event {
   id: number;
@@ -47,6 +50,12 @@ export function EventsTable({ events, onEdit }: EventsTableProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Filtering and pagination state
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Format date to display nicely
   const formatDate = (dateString: string) => {
     try {
@@ -55,6 +64,20 @@ export function EventsTable({ events, onEdit }: EventsTableProps) {
       return dateString;
     }
   };
+
+  // Apply filtering and pagination
+  const filteredEvents = useMemo(() => {
+    return filterData<Event>(
+      events,
+      searchText,
+      filters,
+      ["title", "description", "location"]
+    );
+  }, [events, searchText, filters]);
+
+  const paginatedEvents = useMemo(() => {
+    return paginateData<Event>(filteredEvents, { currentPage, pageSize });
+  }, [filteredEvents, currentPage, pageSize]);
 
   // Delete event mutation
   const deleteEventMutation = useMutation({
@@ -95,85 +118,136 @@ export function EventsTable({ events, onEdit }: EventsTableProps) {
     }
   };
 
+  // Handle filter changes
+  const handleFilterChange = (key: string, value: string) => {
+    if (key === "search") {
+      setSearchText(value);
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    }
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  };
+
+  // Define filter options
+  const filterOptions = {
+    status: [
+      { label: "Upcoming", value: "upcoming" },
+      { label: "Past", value: "past" }
+    ],
+  };
+
   return (
-    <div className="rounded-md border bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Date & Time</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[120px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events.length === 0 ? (
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <TableFilter
+          onFilterChange={handleFilterChange}
+          filterOptions={filterOptions}
+          placeholderText="Search events..."
+          className="w-full md:w-auto"
+        />
+        <Button onClick={() => onEdit({ id: 0 } as Event)} className="whitespace-nowrap">
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Add Event
+        </Button>
+      </div>
+
+      <div className="rounded-md border bg-white">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                No events found. Click the "Add Event" button to create a new event.
-              </TableCell>
+              <TableHead>Title</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
-          ) : (
-            events.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium">
-                  {event.title}
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {event.description}
-                  </p>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center text-sm">
-                    <CalendarIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                    {formatDate(event.date)}
-                  </div>
-                  <div className="flex items-center text-sm mt-1">
-                    <ClockIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                    {event.time}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center text-sm">
-                    <MapPinIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                    {event.location}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {event.isPast ? (
-                    <Badge variant="outline" className="bg-gray-100 text-gray-700">
-                      Past
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-green-100 text-green-700">
-                      Upcoming
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(event)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                      onClick={() => handleDelete(event)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+          </TableHeader>
+          <TableBody>
+            {paginatedEvents.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  {events.length === 0 
+                    ? "No events found. Click the 'Add Event' button to create a new event."
+                    : "No events matching the current filters."}
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              paginatedEvents.map((event) => (
+                <TableRow key={event.id}>
+                  <TableCell className="font-medium">
+                    {event.title}
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {event.description}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center text-sm">
+                      <CalendarIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                      {formatDate(event.date)}
+                    </div>
+                    <div className="flex items-center text-sm mt-1">
+                      <ClockIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                      {event.time}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center text-sm">
+                      <MapPinIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                      {event.location}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {event.isPast ? (
+                      <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                        Past
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-green-100 text-green-700">
+                        Upcoming
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(event)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        onClick={() => handleDelete(event)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        {filteredEvents.length > 0 && (
+          <div className="px-4">
+            <TablePagination
+              currentPage={currentPage}
+              totalItems={filteredEvents.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
