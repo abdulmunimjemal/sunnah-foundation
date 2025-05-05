@@ -142,14 +142,6 @@ const NewsDetailPage = () => {
     },
   });
 
-  // Like form
-  const likeForm = useForm<LikeFormValues>({
-    resolver: zodResolver(likeFormSchema),
-    defaultValues: {
-      email: localStorage.getItem("userEmail") || "",
-    },
-  });
-
   // Comment mutation
   const commentMutation = useMutation({
     mutationFn: async (values: CommentFormValues) => {
@@ -501,45 +493,7 @@ const NewsDetailPage = () => {
                   </div>
                 </div>
                 
-                {/* Like form */}
-                {showLikeForm && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold mb-3">Enter your email to like this article</h3>
-                    <Form {...likeForm}>
-                      <form onSubmit={likeForm.handleSubmit(onLikeSubmit)} className="flex items-end gap-3">
-                        <FormField
-                          control={likeForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            type="submit"
-                            disabled={likeMutation.isPending}
-                            className="bg-primary hover:bg-primary/90"
-                          >
-                            {likeMutation.isPending ? "Processing..." : "Like"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowLikeForm(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </div>
-                )}
+
               </div>
               
               {/* Author info */}
