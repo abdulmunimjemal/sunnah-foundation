@@ -1,7 +1,7 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { db } from "@db";
 import * as schema from "@shared/schema";
 import { 
@@ -559,7 +559,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Donations endpoint
+  // Donations endpoints
+  app.get('/api/donations', checkAuthenticated, async (req, res) => {
+    try {
+      const donations = await db.select().from(schema.donations).orderBy(desc(schema.donations.createdAt));
+      res.json(donations);
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+      res.status(500).json({ error: 'Failed to fetch donations' });
+    }
+  });
+
   app.post('/api/donations', async (req, res) => {
     try {
       const validatedData = insertDonationSchema.parse(req.body);
@@ -570,8 +580,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: 'Failed to process donation', details: error });
     }
   });
+  
+  app.put('/api/donations/:id/status', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      const result = await db.update(schema.donations)
+        .set({ status })
+        .where(eq(schema.donations.id, id))
+        .returning();
 
-  // Volunteers endpoint
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Donation not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating donation status:', error);
+      res.status(500).json({ error: 'Failed to update donation status' });
+    }
+  });
+
+  // Volunteers endpoints
+  app.get('/api/volunteers', checkAuthenticated, async (req, res) => {
+    try {
+      const volunteers = await db.select().from(schema.volunteers).orderBy(desc(schema.volunteers.createdAt));
+      res.json(volunteers);
+    } catch (error) {
+      console.error('Error fetching volunteers:', error);
+      res.status(500).json({ error: 'Failed to fetch volunteers' });
+    }
+  });
+  
   app.post('/api/volunteers', async (req, res) => {
     try {
       const validatedData = insertVolunteerSchema.parse(req.body);
@@ -582,8 +623,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: 'Failed to process volunteer application', details: error });
     }
   });
+  
+  app.put('/api/volunteers/:id/status', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      const result = await db.update(schema.volunteers)
+        .set({ status })
+        .where(eq(schema.volunteers.id, id))
+        .returning();
 
-  // Contact messages endpoint
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Volunteer application not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating volunteer status:', error);
+      res.status(500).json({ error: 'Failed to update volunteer status' });
+    }
+  });
+
+  // Contact messages endpoints
+  app.get('/api/contact', checkAuthenticated, async (req, res) => {
+    try {
+      const messages = await db.select().from(schema.contactMessages).orderBy(desc(schema.contactMessages.createdAt));
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching contact messages:', error);
+      res.status(500).json({ error: 'Failed to fetch contact messages' });
+    }
+  });
+  
   app.post('/api/contact', async (req, res) => {
     try {
       const validatedData = insertContactMessageSchema.parse(req.body);
@@ -605,8 +677,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: 'Failed to submit contact message', details: error });
     }
   });
+  
+  app.put('/api/contact/:id/read', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { isRead } = req.body;
+      
+      const result = await db.update(schema.contactMessages)
+        .set({ isRead })
+        .where(eq(schema.contactMessages.id, id))
+        .returning();
 
-  // Newsletter subscription endpoint
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Contact message not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating message read status:', error);
+      res.status(500).json({ error: 'Failed to update message read status' });
+    }
+  });
+  
+  app.delete('/api/contact/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(schema.contactMessages)
+        .where(eq(schema.contactMessages.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Contact message not found' });
+      }
+      
+      res.json({ message: 'Contact message deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting contact message:', error);
+      res.status(500).json({ error: 'Failed to delete contact message' });
+    }
+  });
+
+  // Newsletter subscription endpoints
+  app.get('/api/newsletter/subscribers', checkAuthenticated, async (req, res) => {
+    try {
+      const subscribers = await db.select().from(schema.newsletterSubscribers).orderBy(desc(schema.newsletterSubscribers.createdAt));
+      res.json(subscribers);
+    } catch (error) {
+      console.error('Error fetching newsletter subscribers:', error);
+      res.status(500).json({ error: 'Failed to fetch newsletter subscribers' });
+    }
+  });
+  
   app.post('/api/newsletter/subscribe', async (req, res) => {
     try {
       const validatedData = insertNewsletterSubscriberSchema.parse(req.body);
@@ -615,6 +736,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error subscribing to newsletter:', error);
       res.status(400).json({ error: 'Failed to subscribe to newsletter', details: error });
+    }
+  });
+  
+  app.delete('/api/newsletter/subscribers/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(schema.newsletterSubscribers)
+        .where(eq(schema.newsletterSubscribers.id, id))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Subscriber not found' });
+      }
+      
+      res.json({ message: 'Subscriber removed successfully' });
+    } catch (error) {
+      console.error('Error removing subscriber:', error);
+      res.status(500).json({ error: 'Failed to remove subscriber' });
+    }
+  });
+  
+  app.delete('/api/newsletter/subscribers/bulk', checkAuthenticated, express.json(), async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Invalid request: ids must be a non-empty array' });
+      }
+      
+      // Using SQL for bulk operations
+      const idStr = ids.join(',');
+      await db.delete(schema.newsletterSubscribers)
+        .where(sql`id IN (${idStr})`);
+      
+      res.json({ message: 'Subscribers removed successfully' });
+    } catch (error) {
+      console.error('Error removing subscribers:', error);
+      res.status(500).json({ error: 'Failed to remove subscribers' });
     }
   });
 
