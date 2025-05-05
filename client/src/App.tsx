@@ -7,7 +7,6 @@ import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import ProgramsPage from "@/pages/ProgramsPage";
 import UniversityPage from "@/pages/UniversityPage";
-import DaewaTVPage from "@/pages/DaewaTVPage";
 import GetInvolvedPage from "@/pages/GetInvolvedPage";
 import NewsPage from "@/pages/NewsPage";
 import ContactPage from "@/pages/ContactPage";
@@ -27,7 +26,6 @@ function Router() {
           <Route path="/about" component={AboutPage} />
           <Route path="/programs" component={ProgramsPage} />
           <Route path="/university" component={UniversityPage} />
-          <Route path="/daewa-tv" component={DaewaTVPage} />
           <Route path="/get-involved" component={GetInvolvedPage} />
           <Route path="/news" component={NewsPage} />
           <Route path="/events" component={EventsPage} />

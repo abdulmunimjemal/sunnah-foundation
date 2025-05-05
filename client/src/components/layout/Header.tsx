@@ -9,7 +9,9 @@ type NavLink = {
   dropdown?: Array<{ name: string; path: string; hash?: string }>;
 };
 
-const navigation: NavLink[] = [
+type NavLinkExternal = NavLink & { external?: boolean };
+
+const navigation: NavLinkExternal[] = [
   { name: "Home", path: "/" },
   {
     name: "About Us",
@@ -24,13 +26,13 @@ const navigation: NavLink[] = [
     name: "Our Programs",
     path: "/programs",
     dropdown: [
-      { name: "Youth Development", path: "/programs", hash: "#youth" },
       { name: "Community Services", path: "/programs", hash: "#community" },
       { name: "Educational Programs", path: "/programs", hash: "#education" },
     ],
   },
   { name: "Sunnah University", path: "/university" },
-  { name: "Daewa TV", path: "/daewa-tv" },
+  { name: "Daewa TV", path: "https://daewatv.comm", external: true },
+  { name: "Events", path: "/events" },
   { name: "Get Involved", path: "/get-involved" },
   { name: "News", path: "/news" },
   { name: "Contact", path: "/contact" },
@@ -80,9 +82,20 @@ const Header = () => {
         <nav className="hidden md:flex space-x-6 items-center">
           {navigation.map((item) => (
             <div key={item.name} className={item.dropdown ? "relative group" : ""}>
-              <Link href={item.path} className="text-secondary hover:text-primary font-semibold flex items-center transition duration-150">
-                {item.name} {item.dropdown && <i className="fas fa-chevron-down ml-1 text-xs"></i>}
-              </Link>
+              {item.external ? (
+                <a 
+                  href={item.path} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-secondary hover:text-primary font-semibold flex items-center transition duration-150"
+                >
+                  {item.name} <i className="fas fa-external-link-alt text-xs ml-1"></i>
+                </a>
+              ) : (
+                <Link href={item.path} className="text-secondary hover:text-primary font-semibold flex items-center transition duration-150">
+                  {item.name} {item.dropdown && <i className="fas fa-chevron-down ml-1 text-xs"></i>}
+                </Link>
+              )}
               {item.dropdown && (
                 <div className="absolute z-10 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
                   <div className="py-1">
@@ -125,6 +138,15 @@ const Header = () => {
                     ))}
                   </div>
                 </>
+              ) : item.external ? (
+                <a 
+                  href={item.path} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block px-3 py-2 text-secondary font-semibold hover:bg-cream rounded-md flex items-center"
+                >
+                  {item.name} <i className="fas fa-external-link-alt text-xs ml-1"></i>
+                </a>
               ) : (
                 <Link href={item.path} className="block px-3 py-2 text-secondary font-semibold hover:bg-cream rounded-md">
                   {item.name}
