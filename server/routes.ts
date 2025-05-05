@@ -875,6 +875,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+  
+  // Newsletter broadcast endpoint
+  app.post(
+    "/api/newsletter/broadcast",
+    checkAuthenticated,
+    async (req, res) => {
+      try {
+        // Validate newsletter data
+        const validatedData = newsletterBroadcastSchema.parse(req.body);
+        
+        if (!process.env.SENDGRID_API_KEY) {
+          return res.status(503).json({ 
+            success: false,
+            message: "SendGrid API key is not configured. Please set up the SENDGRID_API_KEY environment variable."
+          });
+        }
+        
+        // If test mode is enabled, send only to the test email
+        if (validatedData.testEmail) {
+          const result = await sendNewsletter(
+            [validatedData.testEmail], 
+            validatedData.subject, 
+            validatedData.html || validatedData.content
+          );
+          
+          return res.json({
+            success: result.success,
+            message: result.message,
+            testMode: true
+          });
+        }
+        
+        // Otherwise send to all subscribers
+        if (validatedData.sendToAll) {
+          // Get all subscribers
+          const subscribers = await db
+            .select()
+            .from(schema.newsletterSubscribers);
+          
+          if (subscribers.length === 0) {
+            return res.status(404).json({
+              success: false,
+              message: "No subscribers found to send the newsletter to."
+            });
+          }
+          
+          // Extract emails
+          const subscriberEmails = subscribers.map(sub => sub.email);
+          
+          // Send the newsletter
+          const result = await sendNewsletter(
+            subscriberEmails,
+            validatedData.subject,
+            validatedData.html || validatedData.content
+          );
+          
+          return res.json({
+            success: result.success,
+            message: result.message,
+            recipientCount: subscriberEmails.length
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: "Either testEmail or sendToAll must be specified."
+          });
+        }
+      } catch (error) {
+        console.error("Error broadcasting newsletter:", error);
+        res.status(400).json({ 
+          success: false,
+          message: "Failed to broadcast newsletter", 
+          details: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+  );
 
   // Event endpoints
   app.get("/api/events", async (req, res) => {

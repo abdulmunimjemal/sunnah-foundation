@@ -14,6 +14,7 @@ import UniversityCourseForm from "@/components/admin/UniversityCourseForm";
 import FacultyMemberForm from "@/components/admin/FacultyMemberForm";
 import HistoryEventForm from "@/components/admin/HistoryEventForm";
 import EventForm from "@/components/admin/EventForm";
+import NewsletterBroadcastForm from "@/components/admin/NewsletterBroadcastForm";
 
 // Admin tables
 import { NewsTable } from "@/components/admin/NewsTable";
@@ -944,7 +945,13 @@ const AdminPage = () => {
                   <p className="mt-2 text-muted-foreground">Loading newsletter subscribers...</p>
                 </div>
               ) : (
-                <NewsletterSubscribersTable subscribers={subscribers} />
+                <div className="space-y-8">
+                  <NewsletterBroadcastForm subscriberCount={subscribers.length} />
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4">Subscribers</h3>
+                    <NewsletterSubscribersTable subscribers={subscribers} />
+                  </div>
+                </div>
               )}
             </div>
           )}
