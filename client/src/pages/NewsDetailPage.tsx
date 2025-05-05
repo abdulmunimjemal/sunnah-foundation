@@ -63,12 +63,18 @@ const commentFormSchema = z.object({
 
 type CommentFormValues = z.infer<typeof commentFormSchema>;
 
-// Like form schema
-const likeFormSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-});
-
-type LikeFormValues = z.infer<typeof likeFormSchema>;
+// We'll use local storage for likes instead of forms
+// Generate a unique user ID for likes if none exists
+const getUserId = () => {
+  // Check if user already has an ID
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    // Generate a random ID and store it
+    userId = `user_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
+    localStorage.setItem("userId", userId);
+  }
+  return userId;
+};
 
 const NewsDetailPage = () => {
   const { slug } = useParams();
@@ -76,9 +82,8 @@ const NewsDetailPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [likeEmail, setLikeEmail] = useState<string>(localStorage.getItem("userEmail") || "");
+  const [userId] = useState<string>(getUserId());
   const [userLiked, setUserLiked] = useState<boolean>(false);
-  const [showLikeForm, setShowLikeForm] = useState<boolean>(false);
   
   // Set page title
   useEffect(() => {
@@ -113,10 +118,10 @@ const NewsDetailPage = () => {
 
   // Check if user has liked the article
   useEffect(() => {
-    if (likeEmail && slug) {
+    if (userId && slug) {
       const checkLikeStatus = async () => {
         try {
-          const response = await apiRequest(`/api/news/${slug}/likes/check?email=${encodeURIComponent(likeEmail)}`);
+          const response = await apiRequest(`/api/news/${slug}/likes/check?userId=${encodeURIComponent(userId)}`);
           setUserLiked(response.liked);
         } catch (error) {
           console.error("Error checking like status:", error);
@@ -125,7 +130,7 @@ const NewsDetailPage = () => {
       
       checkLikeStatus();
     }
-  }, [likeEmail, slug]);
+  }, [userId, slug]);
 
   // Comment form
   const commentForm = useForm<CommentFormValues>({
@@ -184,18 +189,14 @@ const NewsDetailPage = () => {
 
   // Like mutation
   const likeMutation = useMutation({
-    mutationFn: async (values: LikeFormValues) => {
+    mutationFn: async () => {
       return await apiRequest(`/api/news/${slug}/likes`, {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify({ userId }),
       });
     },
     onSuccess: (response) => {
       setUserLiked(response.liked);
-      
-      // Save user email for future use
-      localStorage.setItem("userEmail", likeForm.getValues("email"));
-      setLikeEmail(likeForm.getValues("email"));
       
       if (response.liked) {
         toast({
@@ -208,8 +209,6 @@ const NewsDetailPage = () => {
           description: "You have removed your like from this article",
         });
       }
-      
-      setShowLikeForm(false);
       
       // Refetch article data to get updated like count
       queryClient.invalidateQueries({ queryKey: ['/api/news', slug] });
@@ -234,16 +233,7 @@ const NewsDetailPage = () => {
   };
 
   const onLike = () => {
-    if (!likeEmail) {
-      setShowLikeForm(true);
-      return;
-    }
-    
-    likeMutation.mutate({ email: likeEmail });
-  };
-
-  const onLikeSubmit = (values: LikeFormValues) => {
-    likeMutation.mutate(values);
+    likeMutation.mutate();
   };
 
   // Helper function to get initials from name

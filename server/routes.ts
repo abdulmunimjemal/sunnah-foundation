@@ -286,14 +286,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingLike = await db.select()
         .from(schema.articleLikes)
         .where(
-          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${validatedData.email}`
+          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.userId} = ${validatedData.userId}`
         );
       
       if (existingLike.length > 0) {
         // User already liked this article, unlike it
         await db.delete(schema.articleLikes)
           .where(
-            sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${validatedData.email}`
+            sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.userId} = ${validatedData.userId}`
           );
         
         // Get updated like count
@@ -323,9 +323,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check if user liked an article
   app.get("/api/news/:slug/likes/check", async (req, res) => {
     try {
-      const email = req.query.email as string;
-      if (!email) {
-        return res.status(400).json({ error: "Email parameter is required" });
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "userId parameter is required" });
       }
       
       const article = await storage.getNewsArticleBySlug(req.params.slug);
@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingLike = await db.select()
         .from(schema.articleLikes)
         .where(
-          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${email}`
+          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.userId} = ${userId}`
         );
       
       res.json({ liked: existingLike.length > 0 });

@@ -266,13 +266,13 @@ export const insertArticleCommentSchema = createInsertSchema(articleComments, {
 export const articleLikes = pgTable("article_likes", {
   id: serial("id").primaryKey(),
   articleId: integer("article_id").references(() => newsArticles.id).notNull(),
-  email: text("email").notNull(),
+  userId: text("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Insert schema for article likes
 export const insertArticleLikeSchema = createInsertSchema(articleLikes, {
-  email: (schema) => schema.email("Valid email is required"),
+  userId: (schema) => schema.min(5, "User ID is required"),
 });
 
 // Define relationships
