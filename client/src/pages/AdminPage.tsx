@@ -13,6 +13,7 @@ import VideoForm from "@/components/admin/VideoForm";
 import UniversityCourseForm from "@/components/admin/UniversityCourseForm";
 import FacultyMemberForm from "@/components/admin/FacultyMemberForm";
 import HistoryEventForm from "@/components/admin/HistoryEventForm";
+import EventForm from "@/components/admin/EventForm";
 
 // Admin tables
 import { NewsTable } from "@/components/admin/NewsTable";
@@ -26,6 +27,7 @@ import { DonationsTable } from "@/components/admin/DonationsTable";
 import { VolunteersTable } from "@/components/admin/VolunteersTable";
 import { ContactMessagesTable } from "@/components/admin/ContactMessagesTable";
 import { NewsletterSubscribersTable } from "@/components/admin/NewsletterSubscribersTable";
+import { EventsTable } from "@/components/admin/EventsTable";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -434,6 +436,13 @@ const AdminPage = () => {
             onSuccess={closeFormDialog}
           />
         );
+      case "events":
+        return (
+          <EventForm 
+            event={activeItemForEdit} 
+            onSuccess={closeFormDialog}
+          />
+        );
       default:
         return null;
     }
@@ -460,6 +469,8 @@ const AdminPage = () => {
         return "";
       case "history":
         return `${action} History Event`;
+      case "events":
+        return `${action} Event`;
       default:
         return "";
     }
@@ -622,7 +633,8 @@ const AdminPage = () => {
               activeSection === "team" || 
               activeSection === "videos" || 
               activeSection === "university" ||
-              activeSection === "history") && (
+              activeSection === "history" ||
+              activeSection === "events") && (
               <Button 
                 onClick={openAddForm}
                 className="bg-accent hover:bg-opacity-90 text-white font-bold rounded-full transition duration-150 flex items-center"
@@ -633,7 +645,8 @@ const AdminPage = () => {
                      activeSection === "videos" ? "Video" :
                      activeSection === "university" && activeTab === "courses" ? "Course" :
                      activeSection === "university" && activeTab === "faculty" ? "Faculty Member" :
-                     activeSection === "history" ? "Event" :
+                     activeSection === "history" ? "History Event" :
+                     activeSection === "events" ? "Event" :
                      activeSection.slice(0, -1)}
               </Button>
             )}
