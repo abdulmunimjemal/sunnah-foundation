@@ -15,9 +15,11 @@ import {
   insertNewsletterSubscriberSchema,
   insertArticleCommentSchema,
   insertArticleLikeSchema,
+  insertSiteSettingSchema,
   newsletterBroadcastSchema,
   videos,
   newsletterSubscribers,
+  siteSettings,
 } from "@shared/schema";
 import { sendNewsletter } from "./email";
 import * as bcrypt from "bcryptjs";
@@ -1187,6 +1189,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Site settings endpoints
+  app.get("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.getAllSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.get("/api/settings/group/:group", async (req, res) => {
+    try {
+      const settings = await storage.getSettingsByGroup(req.params.group);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings by group:", error);
+      res.status(500).json({ error: "Failed to fetch settings by group" });
+    }
+  });
+
+  app.get("/api/settings/:key", async (req, res) => {
+    try {
+      const setting = await storage.getSettingByKey(req.params.key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error("Error fetching setting:", error);
+      res.status(500).json({ error: "Failed to fetch setting" });
+    }
+  });
+
+  app.post("/api/settings", checkAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertSiteSettingSchema.parse(req.body);
+      const newSetting = await storage.createSetting(validatedData);
+      res.status(201).json(newSetting);
+    } catch (error) {
+      console.error("Error creating setting:", error);
+      res.status(400).json({ error: "Failed to create setting", details: error });
+    }
+  });
+
+  app.patch("/api/settings/:key", checkAuthenticated, async (req, res) => {
+    try {
+      if (!req.body.value) {
+        return res.status(400).json({ error: "value is required" });
+      }
+      
+      const updatedSetting = await storage.updateSetting(req.params.key, req.body.value);
+      if (!updatedSetting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      
+      res.json(updatedSetting);
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      res.status(400).json({ error: "Failed to update setting", details: error });
+    }
+  });
+
+  app.delete("/api/settings/:id", checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSetting(id);
+      res.json({ message: "Setting deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting setting:", error);
+      res.status(500).json({ error: "Failed to delete setting" });
     }
   });
 
