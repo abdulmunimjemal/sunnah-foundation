@@ -1,4 +1,5 @@
 import { db } from "./index";
+import { sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import * as bcrypt from 'bcryptjs';
 
