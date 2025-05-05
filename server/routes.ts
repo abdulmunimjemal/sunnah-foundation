@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { eq, desc } from "drizzle-orm";
+import { db } from "@db";
+import * as schema from "@shared/schema";
 import { 
   insertNewsArticleSchema, 
   insertProgramSchema, 
@@ -388,6 +390,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch history events' });
     }
   });
+  
+  app.post('/api/about/history', checkAuthenticated, async (req, res) => {
+    try {
+      const validatedData = req.body;
+      const newEvent = await db.insert(schema.historyEvents).values(validatedData).returning();
+      res.status(201).json(newEvent[0]);
+    } catch (error) {
+      console.error('Error creating history event:', error);
+      res.status(400).json({ error: 'Failed to create history event' });
+    }
+  });
+  
+  app.put('/api/about/history/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = req.body;
+      const result = await db.update(schema.historyEvents)
+        .set(validatedData)
+        .where(eq(schema.historyEvents.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'History event not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating history event:', error);
+      res.status(400).json({ error: 'Failed to update history event' });
+    }
+  });
+  
+  app.delete('/api/about/history/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(schema.historyEvents)
+        .where(eq(schema.historyEvents.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'History event not found' });
+      }
+      
+      res.json({ message: 'History event deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting history event:', error);
+      res.status(500).json({ error: 'Failed to delete history event' });
+    }
+  });
 
   // University endpoints
   app.get('/api/university/courses', async (req, res) => {
@@ -399,6 +450,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch university courses' });
     }
   });
+  
+  app.post('/api/university/courses', checkAuthenticated, async (req, res) => {
+    try {
+      const validatedData = req.body;
+      const newCourse = await db.insert(schema.universityCourses).values(validatedData).returning();
+      res.status(201).json(newCourse[0]);
+    } catch (error) {
+      console.error('Error creating university course:', error);
+      res.status(400).json({ error: 'Failed to create university course' });
+    }
+  });
+  
+  app.put('/api/university/courses/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = req.body;
+      const result = await db.update(schema.universityCourses)
+        .set(validatedData)
+        .where(eq(schema.universityCourses.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'University course not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating university course:', error);
+      res.status(400).json({ error: 'Failed to update university course' });
+    }
+  });
+  
+  app.delete('/api/university/courses/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(schema.universityCourses)
+        .where(eq(schema.universityCourses.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'University course not found' });
+      }
+      
+      res.json({ message: 'University course deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting university course:', error);
+      res.status(500).json({ error: 'Failed to delete university course' });
+    }
+  });
 
   app.get('/api/university/faculty', async (req, res) => {
     try {
@@ -407,6 +507,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching faculty members:', error);
       res.status(500).json({ error: 'Failed to fetch faculty members' });
+    }
+  });
+  
+  app.post('/api/university/faculty', checkAuthenticated, async (req, res) => {
+    try {
+      const validatedData = req.body;
+      const newFaculty = await db.insert(schema.facultyMembers).values(validatedData).returning();
+      res.status(201).json(newFaculty[0]);
+    } catch (error) {
+      console.error('Error creating faculty member:', error);
+      res.status(400).json({ error: 'Failed to create faculty member' });
+    }
+  });
+  
+  app.put('/api/university/faculty/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = req.body;
+      const result = await db.update(schema.facultyMembers)
+        .set(validatedData)
+        .where(eq(schema.facultyMembers.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Faculty member not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      console.error('Error updating faculty member:', error);
+      res.status(400).json({ error: 'Failed to update faculty member' });
+    }
+  });
+  
+  app.delete('/api/university/faculty/:id', checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(schema.facultyMembers)
+        .where(eq(schema.facultyMembers.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Faculty member not found' });
+      }
+      
+      res.json({ message: 'Faculty member deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting faculty member:', error);
+      res.status(500).json({ error: 'Failed to delete faculty member' });
     }
   });
 
