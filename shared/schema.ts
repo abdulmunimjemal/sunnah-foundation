@@ -243,10 +243,62 @@ export const insertFacultyMemberSchema = createInsertSchema(facultyMembers, {
   bio: (schema) => schema.min(10, "Bio must be at least 10 characters"),
 });
 
+// Article comments table
+export const articleComments = pgTable("article_comments", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id").references(() => newsArticles.id).notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  content: text("content").notNull(),
+  parentId: integer("parent_id").references(() => articleComments.id),
+  isApproved: boolean("is_approved").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schema for article comments
+export const insertArticleCommentSchema = createInsertSchema(articleComments, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+  email: (schema) => schema.email("Valid email is required"),
+  content: (schema) => schema.min(3, "Comment must be at least 3 characters"),
+});
+
+// Article likes table
+export const articleLikes = pgTable("article_likes", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id").references(() => newsArticles.id).notNull(),
+  email: text("email").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schema for article likes
+export const insertArticleLikeSchema = createInsertSchema(articleLikes, {
+  email: (schema) => schema.email("Valid email is required"),
+});
+
 // Define relationships
 export const teamMembersRelations = relations(teamMembers, ({ }) => ({}));
 export const programsRelations = relations(programs, ({ }) => ({}));
-export const newsArticlesRelations = relations(newsArticles, ({ }) => ({}));
+export const newsArticlesRelations = relations(newsArticles, ({ many }) => ({
+  comments: many(articleComments),
+  likes: many(articleLikes)
+}));
+export const articleCommentsRelations = relations(articleComments, ({ one, many }) => ({
+  article: one(newsArticles, {
+    fields: [articleComments.articleId],
+    references: [newsArticles.id]
+  }),
+  parentComment: one(articleComments, {
+    fields: [articleComments.parentId],
+    references: [articleComments.id]
+  }),
+  replies: many(articleComments, { relationName: "parent_child" })
+}));
+export const articleLikesRelations = relations(articleLikes, ({ one }) => ({
+  article: one(newsArticles, {
+    fields: [articleLikes.articleId],
+    references: [newsArticles.id]
+  })
+}));
 export const videosRelations = relations(videos, ({ }) => ({}));
 export const donationsRelations = relations(donations, ({ }) => ({}));
 export const volunteersRelations = relations(volunteers, ({ }) => ({}));
@@ -323,6 +375,12 @@ export type InsertUniversityCourse = z.infer<typeof insertUniversityCourseSchema
 
 export type FacultyMember = typeof facultyMembers.$inferSelect;
 export type InsertFacultyMember = z.infer<typeof insertFacultyMemberSchema>;
+
+export type ArticleComment = typeof articleComments.$inferSelect;
+export type InsertArticleComment = z.infer<typeof insertArticleCommentSchema>;
+
+export type ArticleLike = typeof articleLikes.$inferSelect;
+export type InsertArticleLike = z.infer<typeof insertArticleLikeSchema>;
 
 export type ProgramCategory = typeof programCategories.$inferSelect;
 export type InsertProgramCategory = z.infer<typeof insertProgramCategorySchema>;
