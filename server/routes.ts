@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { eq, desc, sql } from "drizzle-orm";
@@ -873,6 +873,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Event endpoints
+  app.get("/api/events", async (req, res) => {
+    try {
+      const events = await storage.getAllEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/events/upcoming", async (req, res) => {
+    try {
+      const events = await storage.getUpcomingEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming events" });
+    }
+  });
+
+  app.get("/api/events/past", async (req, res) => {
+    try {
+      const events = await storage.getPastEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching past events:", error);
+      res.status(500).json({ error: "Failed to fetch past events" });
+    }
+  });
+
+  app.post("/api/events", checkAuthenticated, async (req, res) => {
+    try {
+      const event = await storage.createEvent(req.body);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  app.patch("/api/events/:id", checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.updateEvent(id, req.body);
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/events/:id", checkAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEvent(id);
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
+    }
+  });
+
   // Admin stats endpoint
   app.get("/api/admin/stats", checkAuthenticated, async (req, res) => {
     try {
@@ -891,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Middleware to check if user is authenticated
-function checkAuthenticated(req, res, next) {
+function checkAuthenticated(req: any, res: any, next: any) {
   if (req.isAuthenticated()) {
     return next();
   }
