@@ -11,6 +11,7 @@ import DaewaTVPage from "@/pages/DaewaTVPage";
 import GetInvolvedPage from "@/pages/GetInvolvedPage";
 import NewsPage from "@/pages/NewsPage";
 import ContactPage from "@/pages/ContactPage";
+import EventsPage from "@/pages/EventsPage";
 import AdminPage from "@/pages/AdminPage";
 import AdminLogin from "@/pages/AdminLogin";
 import Header from "@/components/layout/Header";
@@ -29,6 +30,7 @@ function Router() {
           <Route path="/daewa-tv" component={DaewaTVPage} />
           <Route path="/get-involved" component={GetInvolvedPage} />
           <Route path="/news" component={NewsPage} />
+          <Route path="/events" component={EventsPage} />
           <Route path="/contact" component={ContactPage} />
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/admin" component={AdminPage} />
