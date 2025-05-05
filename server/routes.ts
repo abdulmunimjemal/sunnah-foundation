@@ -13,8 +13,11 @@ import {
   insertVolunteerSchema,
   insertContactMessageSchema,
   insertNewsletterSubscriberSchema,
+  newsletterBroadcastSchema,
   videos,
+  newsletterSubscribers,
 } from "@shared/schema";
+import { sendNewsletter } from "./email";
 import * as bcrypt from "bcryptjs";
 import session from "express-session";
 import passport from "passport";

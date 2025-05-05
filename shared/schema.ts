@@ -361,3 +361,12 @@ export const eventsRelations = relations(events, ({ }) => ({}));
 // Event type
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+// Newsletter broadcast schema (not stored in database, just for validation)
+export const newsletterBroadcastSchema = z.object({
+  subject: z.string().min(5, "Subject must be at least 5 characters"),
+  content: z.string().min(10, "Content must be at least 10 characters"),
+  html: z.string().optional(),
+  testEmail: z.string().email("Invalid email address").optional(),
+  sendToAll: z.boolean().default(false)
+});
