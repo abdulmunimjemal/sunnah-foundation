@@ -77,10 +77,8 @@ const GetInvolvedSection = () => {
               ))}
             </div>
             
-            <Link href="/get-involved#donate">
-              <a className="inline-block bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150 w-full">
-                Donate Now
-              </a>
+            <Link href="/get-involved#donate" className="inline-block bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150 w-full">
+              Donate Now
             </Link>
           </div>
           
@@ -106,10 +104,8 @@ const GetInvolvedSection = () => {
               </ul>
             </div>
             
-            <Link href="/get-involved#volunteer">
-              <a className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150 w-full">
-                Become a Volunteer
-              </a>
+            <Link href="/get-involved#volunteer" className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150 w-full">
+              Become a Volunteer
             </Link>
           </div>
           
