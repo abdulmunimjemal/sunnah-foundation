@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 38% 97%;
+    --foreground: 19 53% 19%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 19 53% 19%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 19 53% 19%;
+    
+    --primary: 19 56% 40%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 19 53% 19%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 32 93% 55%;
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 39 38% 90%;
+    --muted-foreground: 19 53% 30%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 19 53% 85%;
+    --input: 19 53% 85%;
+    --ring: 19 56% 40%;
+    
+    --radius: 0.5rem;
+  }
+  
+  * {
+    @apply border-border;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-cream text-secondary font-body antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+  
+  .rtl {
+    direction: rtl;
+  }
+}
+
+@layer components {
+  .container {
+    @apply px-4 mx-auto;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-90 transition duration-150;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-90 transition duration-150;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-90 transition duration-150;
+  }
+  
+  .section-heading {
+    @apply text-3xl md:text-4xl font-bold text-primary font-heading mb-4;
+  }
+  
+  .section-description {
+    @apply text-lg max-w-3xl mx-auto;
+  }
+}
