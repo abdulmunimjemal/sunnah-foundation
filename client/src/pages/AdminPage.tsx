@@ -154,6 +154,19 @@ interface NewsletterSubscriber {
   createdAt: string;
 }
 
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  imageUrl: string;
+  registrationLink: string | null;
+  isPast: boolean;
+  createdAt: string;
+}
+
 const AdminPage = () => {
   // Set page title
   useEffect(() => {
@@ -322,6 +335,12 @@ const AdminPage = () => {
   const { data: subscribers = [], isLoading: subscribersLoading } = useQuery<NewsletterSubscriber[]>({
     queryKey: ['/api/newsletter/subscribers'],
     enabled: isAuthenticated && activeSection === "newsletter"
+  });
+
+  // Events
+  const { data: events = [], isLoading: eventsLoading } = useQuery<Event[]>({
+    queryKey: ['/api/events'],
+    enabled: isAuthenticated && activeSection === "events"
   });
 
   // Dashboard stats
@@ -529,6 +548,16 @@ const AdminPage = () => {
                 onClick={() => setActiveSection("history")}
               >
                 <i className="fas fa-history mr-3"></i> History Events
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`w-full text-left px-4 py-3 flex items-center ${
+                  activeSection === "events" ? "bg-primary" : "hover:bg-secondary/90"
+                }`}
+                onClick={() => setActiveSection("events")}
+              >
+                <i className="fas fa-calendar-alt mr-3"></i> Events
               </button>
             </li>
             <li>
