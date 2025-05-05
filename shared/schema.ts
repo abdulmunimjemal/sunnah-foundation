@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // Users table for authentication
 export const users = pgTable("users", {
@@ -254,6 +255,37 @@ export const historyEventsRelations = relations(historyEvents, ({ }) => ({}));
 export const universityCoursesRelations = relations(universityCourses, ({ }) => ({}));
 export const facultyMembersRelations = relations(facultyMembers, ({ }) => ({}));
 
+// Category tables
+export const programCategories = pgTable("program_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertProgramCategorySchema = createInsertSchema(programCategories, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+});
+
+export const newsCategories = pgTable("news_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertNewsCategorySchema = createInsertSchema(newsCategories, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+});
+
+export const videoCategories = pgTable("video_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVideoCategorySchema = createInsertSchema(videoCategories, {
+  name: (schema) => schema.min(2, "Name must be at least 2 characters"),
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -290,3 +322,12 @@ export type InsertUniversityCourse = z.infer<typeof insertUniversityCourseSchema
 
 export type FacultyMember = typeof facultyMembers.$inferSelect;
 export type InsertFacultyMember = z.infer<typeof insertFacultyMemberSchema>;
+
+export type ProgramCategory = typeof programCategories.$inferSelect;
+export type InsertProgramCategory = z.infer<typeof insertProgramCategorySchema>;
+
+export type NewsCategory = typeof newsCategories.$inferSelect;
+export type InsertNewsCategory = z.infer<typeof insertNewsCategorySchema>;
+
+export type VideoCategory = typeof videoCategories.$inferSelect;
+export type InsertVideoCategory = z.infer<typeof insertVideoCategorySchema>;

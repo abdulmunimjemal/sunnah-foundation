@@ -2,10 +2,62 @@ import { db } from "./index";
 import { sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import * as bcrypt from 'bcryptjs';
+import { eq } from "drizzle-orm";
 
 async function seed() {
   try {
     console.log("Starting database seeding...");
+    
+    // Seed program categories
+    const existingProgramCategories = await db.select().from(schema.programCategories);
+    
+    if (existingProgramCategories.length === 0) {
+      await db.insert(schema.programCategories).values([
+        { name: "Youth Development" },
+        { name: "Education" },
+        { name: "Community Service" },
+        { name: "Family Support" },
+        { name: "Community Engagement" }
+      ]);
+      
+      console.log("Program categories seeded");
+    } else {
+      console.log("Program categories already exist, skipping");
+    }
+    
+    // Seed news categories
+    const existingNewsCategories = await db.select().from(schema.newsCategories);
+    
+    if (existingNewsCategories.length === 0) {
+      await db.insert(schema.newsCategories).values([
+        { name: "Event" },
+        { name: "Program" },
+        { name: "Community" },
+        { name: "Partnership" },
+        { name: "Announcement" }
+      ]);
+      
+      console.log("News categories seeded");
+    } else {
+      console.log("News categories already exist, skipping");
+    }
+    
+    // Seed video categories
+    const existingVideoCategories = await db.select().from(schema.videoCategories);
+    
+    if (existingVideoCategories.length === 0) {
+      await db.insert(schema.videoCategories).values([
+        { name: "Lecture" },
+        { name: "Interview" },
+        { name: "Event" },
+        { name: "Tutorial" },
+        { name: "Documentary" }
+      ]);
+      
+      console.log("Video categories seeded");
+    } else {
+      console.log("Video categories already exist, skipping");
+    }
 
     // Create session table if it doesn't exist
     await db.execute(sql`
@@ -19,7 +71,7 @@ async function seed() {
     console.log("Session table created/verified");
 
     // Create admin user
-    const existingUsers = await db.select().from(schema.users).where(schema.users.username = "admin");
+    const existingUsers = await db.select().from(schema.users).where(sql`${schema.users.username} = 'admin'`);
     
     if (existingUsers.length === 0) {
       const hashedPassword = await bcrypt.hash("adminPassword123", 10);
