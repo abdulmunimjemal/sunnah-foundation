@@ -580,22 +580,8 @@ const AdminPage = () => {
       {/* Main content */}
       <main className="flex-1 overflow-x-auto">
         <div className="py-6 px-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold text-primary">
-              {activeSection === "dashboard" && "Dashboard"}
-              {activeSection === "news" && "News & Updates"}
-              {activeSection === "programs" && "Programs"}
-              {activeSection === "team" && "Team Members"}
-              {activeSection === "videos" && "Videos"}
-              {activeSection === "university" && "Sunnah University"}
-              {activeSection === "history" && "History Events"}
-              {activeSection === "donations" && "Donations"}
-              {activeSection === "volunteers" && "Volunteers"}
-              {activeSection === "contacts" && "Contact Messages"}
-              {activeSection === "newsletter" && "Newsletter Subscribers"}
-            </h1>
-            
+          {/* Content Actions */}
+          <div className="flex items-center justify-end mb-8">
             {(activeSection === "news" || 
               activeSection === "programs" || 
               activeSection === "team" || 
