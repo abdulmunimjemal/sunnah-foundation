@@ -12,6 +12,12 @@ interface Program {
   slug: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
 const ProgramsPage = () => {
   // Set page title
   useEffect(() => {
@@ -24,7 +30,7 @@ const ProgramsPage = () => {
     queryKey: ['/api/programs'],
   });
 
-  const { data: categories = [] } = useQuery<string[]>({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/programs/categories'],
   });
 
@@ -57,13 +63,13 @@ const ProgramsPage = () => {
             
             {categories.map(category => (
               <button 
-                key={category}
+                key={category.id}
                 className={`px-4 py-2 rounded-full ${
-                  activeCategory === category ? "bg-primary text-white" : "bg-white text-secondary"
+                  activeCategory === category.name ? "bg-primary text-white" : "bg-white text-secondary"
                 } font-semibold transition`}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => setActiveCategory(category.name)}
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>

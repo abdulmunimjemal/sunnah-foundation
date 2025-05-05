@@ -15,6 +15,12 @@ interface NewsArticle {
   slug: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
 const NewsPage = () => {
   // Set page title
   useEffect(() => {
@@ -31,7 +37,7 @@ const NewsPage = () => {
     queryKey: ['/api/news'],
   });
 
-  const { data: categories = [] } = useQuery<string[]>({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/news/categories'],
   });
 
@@ -247,17 +253,17 @@ const NewsPage = () => {
                     </button>
                   </li>
                   {categories.map(category => (
-                    <li key={category}>
+                    <li key={category.id}>
                       <button 
                         className={`w-full text-left px-2 py-1 rounded ${
-                          activeCategory === category ? "bg-primary text-white" : "hover:bg-gray-100"
+                          activeCategory === category.name ? "bg-primary text-white" : "hover:bg-gray-100"
                         }`}
                         onClick={() => {
-                          setActiveCategory(category);
+                          setActiveCategory(category.name);
                           setCurrentPage(1);
                         }}
                       >
-                        {category}
+                        {category.name}
                       </button>
                     </li>
                   ))}
