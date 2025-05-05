@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash, CheckCircle, UserMinus } from "lucide-react";
+import { Trash, CheckCircle, UserMinus, ArrowUpDown } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -32,6 +32,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { sortData, paginateData, calculateTotalPages } from "@/lib/tableFunctions";
+import { Input } from "@/components/ui/input";
 
 interface NewsletterSubscriber {
   id: number;
@@ -50,6 +53,13 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [selectedSubscribers, setSelectedSubscribers] = useState<number[]>([]);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({
+    key: "createdAt",
+    direction: "desc"
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
 
   const deleteSubscriberMutation = useMutation({
     mutationFn: (id: number) =>
@@ -124,10 +134,10 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
   };
 
   const toggleSelectAll = () => {
-    if (selectedSubscribers.length === subscribers.length) {
+    if (selectedSubscribers.length === filteredData.length) {
       setSelectedSubscribers([]);
     } else {
-      setSelectedSubscribers(subscribers.map(subscriber => subscriber.id));
+      setSelectedSubscribers(filteredData.map(subscriber => subscriber.id));
     }
   };
 
@@ -139,18 +149,65 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
     }
   };
 
+  const handleSort = (key: string) => {
+    setSortConfig(prevConfig => {
+      if (prevConfig && prevConfig.key === key) {
+        return { key, direction: prevConfig.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  // Apply filtering, sorting, and pagination
+  const filteredData = useMemo(() => {
+    let processed = [...subscribers];
+    
+    // Filter by email search
+    if (searchQuery) {
+      processed = processed.filter(s => 
+        s.email.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Apply sorting
+    if (sortConfig) {
+      processed = sortData(processed, sortConfig);
+    }
+    
+    return processed;
+  }, [subscribers, searchQuery, sortConfig]);
+  
+  // Apply pagination
+  const paginatedData = useMemo(() => {
+    return paginateData(filteredData, { currentPage, pageSize });
+  }, [filteredData, currentPage, pageSize]);
+  
+  const totalPages = calculateTotalPages(filteredData.length, pageSize);
+
   return (
     <div className="space-y-4">
-      {subscribers.length > 0 && (
+      <div className="flex flex-col space-y-4">
+        <Input
+          placeholder="Search by email..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="max-w-sm"
+        />
+      </div>
+
+      {filteredData.length > 0 && (
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="selectAll"
-              checked={selectedSubscribers.length === subscribers.length && subscribers.length > 0}
+              checked={selectedSubscribers.length === filteredData.length && filteredData.length > 0}
               onCheckedChange={toggleSelectAll}
             />
             <label htmlFor="selectAll" className="text-sm font-medium">
-              Select All ({subscribers.length})
+              Select All ({filteredData.length})
             </label>
           </div>
           {selectedSubscribers.length > 0 && (
@@ -162,47 +219,67 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
         </div>
       )}
       
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]"></TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead className="w-[150px]">Subscribed On</TableHead>
-            <TableHead className="text-right w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {subscribers.length === 0 && (
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                No newsletter subscribers found
-              </TableCell>
+              <TableHead className="w-[50px]"></TableHead>
+              <TableHead onClick={() => handleSort('email')} className="cursor-pointer">
+                Email <ArrowUpDown className="ml-1 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead onClick={() => handleSort('createdAt')} className="cursor-pointer w-[150px]">
+                Subscribed On <ArrowUpDown className="ml-1 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="text-right w-[100px]">Actions</TableHead>
             </TableRow>
-          )}
-          {subscribers.map((subscriber) => (
-            <TableRow key={subscriber.id}>
-              <TableCell>
-                <Checkbox 
-                  checked={selectedSubscribers.includes(subscriber.id)}
-                  onCheckedChange={() => toggleSelectSubscriber(subscriber.id)}
-                />
-              </TableCell>
-              <TableCell className="font-medium">{subscriber.email}</TableCell>
-              <TableCell>{formatDate(subscriber.createdAt)}</TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(subscriber)}
-                  title="Remove subscriber"
-                >
-                  <Trash className="h-4 w-4 text-destructive" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {paginatedData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  No newsletter subscribers found
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedData.map((subscriber) => (
+                <TableRow key={subscriber.id}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedSubscribers.includes(subscriber.id)}
+                      onCheckedChange={() => toggleSelectSubscriber(subscriber.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{subscriber.email}</TableCell>
+                  <TableCell>{formatDate(subscriber.createdAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(subscriber)}
+                      title="Remove subscriber"
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {paginatedData.length} of {filteredData.length} subscribers
+          </div>
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
 
       {/* Individual Delete confirmation dialog */}
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>

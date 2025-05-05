@@ -1,11 +1,6 @@
-import React from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { generatePaginationRange } from "@/lib/tableFunctions";
 
 interface TablePaginationProps {
   currentPage: number;
@@ -18,104 +13,61 @@ export function TablePagination({
   totalPages,
   onPageChange,
 }: TablePaginationProps) {
-  // Function to generate pagination range with ellipsis
-  const getPaginationRange = () => {
-    const delta = 2; // Number of pages to show on each side of current page
-    const range: Array<number | string> = [];
-    
-    // Always show first page
-    range.push(1);
-    
-    // Calculate start and end of range
-    const rangeStart = Math.max(2, currentPage - delta);
-    const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
-    
-    // Add ellipsis after first page if needed
-    if (rangeStart > 2) {
-      range.push("...");
-    }
-    
-    // Add pages in the middle
-    for (let i = rangeStart; i <= rangeEnd; i++) {
-      range.push(i);
-    }
-    
-    // Add ellipsis before last page if needed
-    if (rangeEnd < totalPages - 1) {
-      range.push("...");
-    }
-    
-    // Always show last page if more than 1 page
-    if (totalPages > 1) {
-      range.push(totalPages);
-    }
-    
-    return range;
-  };
+  // Generate array of page numbers to display
+  const pageNumbers = generatePaginationRange(currentPage, totalPages);
 
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
-    <div className="flex items-center justify-between mt-6">
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          aria-label="First page"
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex items-center justify-center space-x-2">
+      {/* Previous page button */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
 
-      <div className="flex items-center gap-1">
-        {getPaginationRange().map((page, index) => (
-          <React.Fragment key={index}>
-            {page === "..." ? (
-              <span className="px-3 py-2">...</span>
-            ) : (
-              <Button
-                variant={currentPage === page ? "default" : "outline"}
-                className={currentPage === page ? "bg-primary text-white" : ""}
-                onClick={() => typeof page === "number" && onPageChange(page)}
-              >
-                {page}
-              </Button>
+      {/* Page number buttons */}
+      {pageNumbers.map((page, index) => {
+        // Add ellipsis when there's a gap in page numbers
+        const showEllipsisBefore =
+          index > 0 && page - pageNumbers[index - 1] > 1;
+
+        return (
+          <div key={page} className="flex items-center">
+            {showEllipsisBefore && (
+              <span className="px-2">
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </span>
             )}
-          </React.Fragment>
-        ))}
-      </div>
+            <Button
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page)}
+              className="min-w-[36px]"
+            >
+              {page}
+            </Button>
+          </div>
+        );
+      })}
 
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          aria-label="Next page"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          aria-label="Last page"
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Next page button */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        aria-label="Next page"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

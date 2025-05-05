@@ -142,6 +142,13 @@ export function paginateData<T>(data: T[], pagination: PaginationConfig): T[] {
 }
 
 /**
+ * Calculate total number of pages
+ */
+export function calculateTotalPages(totalItems: number, pageSize: number): number {
+  return Math.max(1, Math.ceil(totalItems / pageSize));
+}
+
+/**
  * Generate pagination range for UI
  */
 export function generatePaginationRange(currentPage: number, totalPages: number): number[] {
