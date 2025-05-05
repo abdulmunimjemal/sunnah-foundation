@@ -15,6 +15,7 @@ import FacultyMemberForm from "@/components/admin/FacultyMemberForm";
 import HistoryEventForm from "@/components/admin/HistoryEventForm";
 import EventForm from "@/components/admin/EventForm";
 import NewsletterBroadcastForm from "@/components/admin/NewsletterBroadcastForm";
+import SettingsManager from "@/components/admin/SettingsManager";
 
 // Admin tables
 import { NewsTable } from "@/components/admin/NewsTable";
@@ -606,6 +607,16 @@ const AdminPage = () => {
             <li>
               <button 
                 className={`w-full text-left px-4 py-3 flex items-center ${
+                  activeSection === "settings" ? "bg-primary" : "hover:bg-secondary/90"
+                }`}
+                onClick={() => setActiveSection("settings")}
+              >
+                <i className="fas fa-cog mr-3"></i> Settings
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`w-full text-left px-4 py-3 flex items-center ${
                   activeSection === "newsletter" ? "bg-primary" : "hover:bg-secondary/90"
                 }`}
                 onClick={() => setActiveSection("newsletter")}
@@ -977,6 +988,14 @@ const AdminPage = () => {
                   <EventsTable events={events} onEdit={openEditForm} />
                 </div>
               )}
+            </div>
+          )}
+          
+          {/* Settings section */}
+          {activeSection === "settings" && (
+            <div>
+              <h2 className="text-2xl font-semibold mb-6">Site Settings</h2>
+              <SettingsManager />
             </div>
           )}
         </div>
