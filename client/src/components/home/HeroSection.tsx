@@ -20,15 +20,11 @@ const HeroSection = () => {
           Dedicated to promoting authentic Islamic knowledge, community service, and spiritual growth
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link href="/programs">
-            <a className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
-              Explore Our Programs
-            </a>
+          <Link href="/programs" className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
+            Explore Our Programs
           </Link>
-          <Link href="/get-involved#donate">
-            <a className="bg-white hover:bg-gray-100 text-primary font-bold py-3 px-8 rounded-full transition duration-150">
-              Support Our Mission
-            </a>
+          <Link href="/get-involved#donate" className="bg-white hover:bg-gray-100 text-primary font-bold py-3 px-8 rounded-full transition duration-150">
+            Support Our Mission
           </Link>
         </div>
       </div>

@@ -56,10 +56,7 @@ export function ContactMessagesTable({ messages }: ContactMessagesTableProps) {
 
   const markAsReadMutation = useMutation({
     mutationFn: ({ id, isRead }: { id: number; isRead: boolean }) =>
-      apiRequest(`/api/contact/${id}/read`, {
-        method: "PUT",
-        body: JSON.stringify({ isRead }),
-      }),
+      apiRequest("PUT", `/api/contact/${id}/read`, { isRead }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contact"] });
       toast({

@@ -70,10 +70,8 @@ const NewsSection = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-3">{article.title}</h3>
                     <p className="mb-4">{article.excerpt}</p>
-                    <Link href={`/news/${article.slug}`}>
-                      <a className="inline-flex items-center text-accent font-semibold hover:underline">
-                        Read full story <i className="fas fa-arrow-right ml-2"></i>
-                      </a>
+                    <Link href={`/news/${article.slug}`} className="inline-flex items-center text-accent font-semibold hover:underline">
+                      Read full story <i className="fas fa-arrow-right ml-2"></i>
                     </Link>
                   </div>
                 </div>
@@ -83,10 +81,8 @@ const NewsSection = () => {
         )}
         
         <div className="mt-12 text-center">
-          <Link href="/news">
-            <a className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
-              View All News
-            </a>
+          <Link href="/news" className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
+            View All News
           </Link>
         </div>
       </div>

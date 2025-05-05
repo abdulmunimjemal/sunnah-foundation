@@ -94,10 +94,8 @@ const DaewaTVSection = () => {
         )}
         
         <div className="mt-10 text-center">
-          <Link href="/daewa-tv">
-            <a className="inline-block bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
-              Explore All Videos
-            </a>
+          <Link href="/daewa-tv" className="inline-block bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
+            Explore All Videos
           </Link>
         </div>
       </div>

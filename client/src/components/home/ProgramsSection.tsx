@@ -67,10 +67,8 @@ const ProgramsSection = () => {
         )}
         
         <div className="mt-12 text-center">
-          <Link href="/programs">
-            <a className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
-              View All Programs
-            </a>
+          <Link href="/programs" className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
+            View All Programs
           </Link>
         </div>
       </div>

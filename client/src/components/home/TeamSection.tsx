@@ -82,10 +82,8 @@ const TeamSection = () => {
         )}
         
         <div className="mt-12 text-center">
-          <Link href="/about#team">
-            <a className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
+          <Link href="/about#team" className="inline-block bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-full transition duration-150">
               Meet Our Full Team
-            </a>
           </Link>
         </div>
       </div>
