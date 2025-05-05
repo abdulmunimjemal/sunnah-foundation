@@ -12,6 +12,12 @@ interface Video {
   category: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
 const DaewaTVPage = () => {
   // Set page title
   useEffect(() => {
@@ -25,7 +31,7 @@ const DaewaTVPage = () => {
     queryKey: ['/api/videos'],
   });
 
-  const { data: categories = [] } = useQuery<string[]>({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/videos/categories'],
   });
 
@@ -111,13 +117,13 @@ const DaewaTVPage = () => {
               
               {categories.map(category => (
                 <button 
-                  key={category}
+                  key={category.id}
                   className={`px-4 py-2 rounded-full text-sm ${
-                    activeCategory === category ? "bg-primary text-white" : "bg-white text-secondary"
+                    activeCategory === category.name ? "bg-primary text-white" : "bg-white text-secondary"
                   } font-semibold transition`}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => setActiveCategory(category.name)}
                 >
-                  {category}
+                  {category.name}
                 </button>
               ))}
             </div>
