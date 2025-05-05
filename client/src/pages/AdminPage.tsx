@@ -5,6 +5,34 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { SunnahLogo } from "@/components/ui/sunnahlogo";
 
+// Admin forms
+import NewsArticleForm from "@/components/admin/NewsArticleForm";
+import ProgramForm from "@/components/admin/ProgramForm";
+import TeamMemberForm from "@/components/admin/TeamMemberForm";
+import VideoForm from "@/components/admin/VideoForm";
+import UniversityCourseForm from "@/components/admin/UniversityCourseForm";
+import FacultyMemberForm from "@/components/admin/FacultyMemberForm";
+import HistoryEventForm from "@/components/admin/HistoryEventForm";
+
+// Admin tables
+import { NewsTable } from "@/components/admin/NewsTable";
+import { ProgramsTable } from "@/components/admin/ProgramsTable";
+import { TeamMembersTable } from "@/components/admin/TeamMembersTable";
+import { VideosTable } from "@/components/admin/VideosTable";
+import { UniversityCoursesTable } from "@/components/admin/UniversityCoursesTable";
+import { FacultyMembersTable } from "@/components/admin/FacultyMembersTable";
+import { HistoryEventsTable } from "@/components/admin/HistoryEventsTable";
+import { DonationsTable } from "@/components/admin/DonationsTable";
+import { VolunteersTable } from "@/components/admin/VolunteersTable";
+import { ContactMessagesTable } from "@/components/admin/ContactMessagesTable";
+import { NewsletterSubscribersTable } from "@/components/admin/NewsletterSubscribersTable";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Types
 interface NewsArticle {
   id: number;
   title: string;
@@ -33,6 +61,7 @@ interface TeamMember {
   title: string;
   bio: string;
   imageUrl: string;
+  isLeadership: boolean;
   socialLinks: {
     linkedin?: string;
     twitter?: string;
@@ -50,6 +79,79 @@ interface Video {
   views: number;
   date: string;
   category: string;
+  isFeatured: boolean;
+  isMainFeature: boolean;
+}
+
+interface UniversityCourse {
+  id: number;
+  title: string;
+  description: string;
+  level: string;
+  duration: string;
+  instructors: string[];
+  imageUrl: string;
+}
+
+interface FacultyMember {
+  id: number;
+  name: string;
+  title: string;
+  specialization: string;
+  bio: string;
+  imageUrl: string;
+}
+
+interface HistoryEvent {
+  id: number;
+  year: number;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  sortOrder: number;
+}
+
+interface Donation {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  amount: number;
+  paymentMethod: string;
+  recurring: boolean;
+  transactionId?: string;
+  status: string;
+  createdAt: string;
+}
+
+interface Volunteer {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  areas: string[];
+  availability: string[];
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  newsletter: boolean;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  createdAt: string;
 }
 
 const AdminPage = () => {
@@ -64,6 +166,11 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Dialog state for forms
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [activeItemForEdit, setActiveItemForEdit] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("university");
 
   // Check authentication status on mount
   useEffect(() => {
@@ -103,25 +210,112 @@ const AdminPage = () => {
     }
   };
 
-  // Queries for data
-  const { data: newsArticles = [] } = useQuery<NewsArticle[]>({
+  // Open form dialog
+  const openAddForm = () => {
+    setActiveItemForEdit(null);
+    setFormDialogOpen(true);
+  };
+
+  // Open edit form
+  const openEditForm = (item: any) => {
+    setActiveItemForEdit(item);
+    setFormDialogOpen(true);
+  };
+
+  // Close form dialog
+  const closeFormDialog = () => {
+    setFormDialogOpen(false);
+    setActiveItemForEdit(null);
+  };
+
+  // Handle tab change in university section
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  // Content Queries
+  // News articles
+  const { data: newsArticles = [], isLoading: newsLoading } = useQuery<NewsArticle[]>({
     queryKey: ['/api/news'],
     enabled: isAuthenticated && activeSection === "news"
   });
 
-  const { data: programs = [] } = useQuery<Program[]>({
+  // News categories
+  const { data: newsCategories = [] } = useQuery<string[]>({
+    queryKey: ['/api/news/categories'],
+    enabled: isAuthenticated && (activeSection === "news" || formDialogOpen)
+  });
+
+  // Programs
+  const { data: programs = [], isLoading: programsLoading } = useQuery<Program[]>({
     queryKey: ['/api/programs'],
     enabled: isAuthenticated && activeSection === "programs"
   });
 
-  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+  // Program categories
+  const { data: programCategories = [] } = useQuery<string[]>({
+    queryKey: ['/api/programs/categories'],
+    enabled: isAuthenticated && (activeSection === "programs" || formDialogOpen)
+  });
+
+  // Team members
+  const { data: teamMembers = [], isLoading: teamLoading } = useQuery<TeamMember[]>({
     queryKey: ['/api/team/all'],
     enabled: isAuthenticated && activeSection === "team"
   });
 
-  const { data: videos = [] } = useQuery<Video[]>({
+  // Videos
+  const { data: videos = [], isLoading: videosLoading } = useQuery<Video[]>({
     queryKey: ['/api/videos'],
     enabled: isAuthenticated && activeSection === "videos"
+  });
+
+  // Video categories
+  const { data: videoCategories = [] } = useQuery<string[]>({
+    queryKey: ['/api/videos/categories'],
+    enabled: isAuthenticated && (activeSection === "videos" || formDialogOpen)
+  });
+
+  // University courses
+  const { data: courses = [], isLoading: coursesLoading } = useQuery<UniversityCourse[]>({
+    queryKey: ['/api/university/courses'],
+    enabled: isAuthenticated && activeSection === "university" && activeTab === "courses"
+  });
+
+  // Faculty members
+  const { data: faculty = [], isLoading: facultyLoading } = useQuery<FacultyMember[]>({
+    queryKey: ['/api/university/faculty'],
+    enabled: isAuthenticated && activeSection === "university" && activeTab === "faculty"
+  });
+
+  // History events
+  const { data: historyEvents = [], isLoading: historyLoading } = useQuery<HistoryEvent[]>({
+    queryKey: ['/api/about/history'],
+    enabled: isAuthenticated && activeSection === "history"
+  });
+
+  // Donations
+  const { data: donations = [], isLoading: donationsLoading } = useQuery<Donation[]>({
+    queryKey: ['/api/donations'],
+    enabled: isAuthenticated && activeSection === "donations"
+  });
+
+  // Volunteers
+  const { data: volunteers = [], isLoading: volunteersLoading } = useQuery<Volunteer[]>({
+    queryKey: ['/api/volunteers'],
+    enabled: isAuthenticated && activeSection === "volunteers"
+  });
+
+  // Contact messages
+  const { data: contactMessages = [], isLoading: contactsLoading } = useQuery<ContactMessage[]>({
+    queryKey: ['/api/contact'],
+    enabled: isAuthenticated && activeSection === "contacts"
+  });
+
+  // Newsletter subscribers
+  const { data: subscribers = [], isLoading: subscribersLoading } = useQuery<NewsletterSubscriber[]>({
+    queryKey: ['/api/newsletter/subscribers'],
+    enabled: isAuthenticated && activeSection === "newsletter"
   });
 
   // Dashboard stats
@@ -133,86 +327,13 @@ const AdminPage = () => {
     donations: number;
     volunteers: number;
     contacts: number;
+    courses: number;
+    faculty: number;
+    events: number;
+    subscribers: number;
   }>({
     queryKey: ['/api/admin/stats'],
     enabled: isAuthenticated && activeSection === "dashboard"
-  });
-
-  // Mutations
-  const deleteNewsMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/news/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news'] });
-      toast({
-        title: "Success",
-        description: "News article deleted successfully.",
-        variant: "default",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete news article.",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  const deleteProgramMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/programs/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
-      toast({
-        title: "Success",
-        description: "Program deleted successfully.",
-        variant: "default",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete program.",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  const deleteTeamMemberMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/team/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/team/all'] });
-      toast({
-        title: "Success",
-        description: "Team member deleted successfully.",
-        variant: "default",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete team member.",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  const deleteVideoMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/videos/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/videos'] });
-      toast({
-        title: "Success",
-        description: "Video deleted successfully.",
-        variant: "default",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete video.",
-        variant: "destructive",
-      });
-    }
   });
 
   if (isLoading) {
@@ -229,6 +350,95 @@ const AdminPage = () => {
   if (!isAuthenticated) {
     return null; // Redirect will happen in useEffect
   }
+
+  // Form dialog content based on active section
+  const renderFormDialog = () => {
+    switch (activeSection) {
+      case "news":
+        return (
+          <NewsArticleForm 
+            article={activeItemForEdit} 
+            categories={newsCategories}
+            onSuccess={closeFormDialog}
+          />
+        );
+      case "programs":
+        return (
+          <ProgramForm 
+            program={activeItemForEdit} 
+            categories={programCategories}
+            onSuccess={closeFormDialog}
+          />
+        );
+      case "team":
+        return (
+          <TeamMemberForm 
+            teamMember={activeItemForEdit} 
+            onSuccess={closeFormDialog}
+          />
+        );
+      case "videos":
+        return (
+          <VideoForm 
+            video={activeItemForEdit} 
+            categories={videoCategories}
+            onSuccess={closeFormDialog}
+          />
+        );
+      case "university":
+        if (activeTab === "courses") {
+          return (
+            <UniversityCourseForm 
+              course={activeItemForEdit} 
+              onSuccess={closeFormDialog}
+            />
+          );
+        } else if (activeTab === "faculty") {
+          return (
+            <FacultyMemberForm 
+              faculty={activeItemForEdit} 
+              onSuccess={closeFormDialog}
+            />
+          );
+        }
+        return null;
+      case "history":
+        return (
+          <HistoryEventForm 
+            event={activeItemForEdit} 
+            onSuccess={closeFormDialog}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Get dialog title based on activeSection and activeItemForEdit
+  const getDialogTitle = () => {
+    const action = activeItemForEdit ? "Edit" : "Add";
+    switch (activeSection) {
+      case "news":
+        return `${action} News Article`;
+      case "programs":
+        return `${action} Program`;
+      case "team":
+        return `${action} Team Member`;
+      case "videos":
+        return `${action} Video`;
+      case "university":
+        if (activeTab === "courses") {
+          return `${action} University Course`;
+        } else if (activeTab === "faculty") {
+          return `${action} Faculty Member`;
+        }
+        return "";
+      case "history":
+        return `${action} History Event`;
+      default:
+        return "";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-cream flex">
@@ -295,6 +505,29 @@ const AdminPage = () => {
             <li>
               <button 
                 className={`w-full text-left px-4 py-3 flex items-center ${
+                  activeSection === "university" ? "bg-primary" : "hover:bg-secondary/90"
+                }`}
+                onClick={() => {
+                  setActiveSection("university");
+                  setActiveTab("courses");
+                }}
+              >
+                <i className="fas fa-graduation-cap mr-3"></i> University
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`w-full text-left px-4 py-3 flex items-center ${
+                  activeSection === "history" ? "bg-primary" : "hover:bg-secondary/90"
+                }`}
+                onClick={() => setActiveSection("history")}
+              >
+                <i className="fas fa-history mr-3"></i> History Events
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`w-full text-left px-4 py-3 flex items-center ${
                   activeSection === "donations" ? "bg-primary" : "hover:bg-secondary/90"
                 }`}
                 onClick={() => setActiveSection("donations")}
@@ -322,6 +555,16 @@ const AdminPage = () => {
                 <i className="fas fa-envelope mr-3"></i> Contact Messages
               </button>
             </li>
+            <li>
+              <button 
+                className={`w-full text-left px-4 py-3 flex items-center ${
+                  activeSection === "newsletter" ? "bg-primary" : "hover:bg-secondary/90"
+                }`}
+                onClick={() => setActiveSection("newsletter")}
+              >
+                <i className="fas fa-paper-plane mr-3"></i> Newsletter
+              </button>
+            </li>
             <li className="mt-6 border-t border-gray-700 pt-4">
               <button 
                 className="w-full text-left px-4 py-3 flex items-center text-red-300 hover:bg-red-900/20"
@@ -345,19 +588,33 @@ const AdminPage = () => {
               {activeSection === "programs" && "Programs"}
               {activeSection === "team" && "Team Members"}
               {activeSection === "videos" && "Videos"}
+              {activeSection === "university" && "Sunnah University"}
+              {activeSection === "history" && "History Events"}
               {activeSection === "donations" && "Donations"}
               {activeSection === "volunteers" && "Volunteers"}
               {activeSection === "contacts" && "Contact Messages"}
+              {activeSection === "newsletter" && "Newsletter Subscribers"}
             </h1>
             
-            {activeSection !== "dashboard" && (
-              <button className="bg-accent hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-full transition duration-150 flex items-center">
+            {(activeSection === "news" || 
+              activeSection === "programs" || 
+              activeSection === "team" || 
+              activeSection === "videos" || 
+              activeSection === "university" ||
+              activeSection === "history") && (
+              <Button 
+                onClick={openAddForm}
+                className="bg-accent hover:bg-opacity-90 text-white font-bold rounded-full transition duration-150 flex items-center"
+              >
                 <i className="fas fa-plus mr-2"></i> 
                 Add {activeSection === "news" ? "Article" : 
                      activeSection === "team" ? "Team Member" : 
-                     activeSection === "videos" ? "Video" : 
+                     activeSection === "videos" ? "Video" :
+                     activeSection === "university" && activeTab === "courses" ? "Course" :
+                     activeSection === "university" && activeTab === "faculty" ? "Faculty Member" :
+                     activeSection === "history" ? "Event" :
                      activeSection.slice(0, -1)}
-              </button>
+              </Button>
             )}
           </div>
           
@@ -414,396 +671,261 @@ const AdminPage = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold text-primary mb-4">Recent Activity</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start">
-                      <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent mr-3 flex-shrink-0">
-                        <i className="fas fa-plus"></i>
-                      </div>
-                      <div>
-                        <p className="font-semibold">New article published</p>
-                        <p className="text-sm text-gray-500">2 hours ago</p>
-                      </div>
+                  <h3 className="text-xl font-bold text-primary mb-4">Content Management</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>University Courses</span>
+                      <span className="font-semibold">{stats?.courses || 0}</span>
                     </div>
-                    <div className="flex items-start">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 mr-3 flex-shrink-0">
-                        <i className="fas fa-dollar-sign"></i>
-                      </div>
-                      <div>
-                        <p className="font-semibold">New donation received</p>
-                        <p className="text-sm text-gray-500">Yesterday</p>
-                      </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>Faculty Members</span>
+                      <span className="font-semibold">{stats?.faculty || 0}</span>
                     </div>
-                    <div className="flex items-start">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-3 flex-shrink-0">
-                        <i className="fas fa-user-plus"></i>
-                      </div>
-                      <div>
-                        <p className="font-semibold">New volunteer application</p>
-                        <p className="text-sm text-gray-500">2 days ago</p>
-                      </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span>History Events</span>
+                      <span className="font-semibold">{stats?.events || 0}</span>
                     </div>
-                    <div className="flex items-start">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mr-3 flex-shrink-0">
-                        <i className="fas fa-edit"></i>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Program updated</p>
-                        <p className="text-sm text-gray-500">3 days ago</p>
-                      </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span>Newsletter Subscribers</span>
+                      <span className="font-semibold">{stats?.subscribers || 0}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold text-primary mb-4">Quick Stats</h3>
+                  <h3 className="text-xl font-bold text-primary mb-4">Engagement Overview</h3>
                   <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-gray-700">Donations This Month</span>
-                        <span className="text-accent font-bold">{stats?.donations || 0}</span>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">Donations</p>
+                        <p className="text-sm text-gray-500">{stats?.donations || 0} total</p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-accent h-2 rounded-full" style={{ width: '70%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-gray-700">Volunteer Applications</span>
-                        <span className="text-primary font-bold">{stats?.volunteers || 0}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '45%' }}></div>
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                        <i className="fas fa-hand-holding-heart"></i>
                       </div>
                     </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-gray-700">Contact Messages</span>
-                        <span className="text-secondary font-bold">{stats?.contacts || 0}</span>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">Volunteer Applications</p>
+                        <p className="text-sm text-gray-500">{stats?.volunteers || 0} total</p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-secondary h-2 rounded-full" style={{ width: '30%' }}></div>
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                        <i className="fas fa-hands-helping"></i>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-6">
-                    <h4 className="font-semibold mb-3">System Status</h4>
-                    <div className="flex items-center text-green-600">
-                      <i className="fas fa-check-circle mr-2"></i>
-                      <span>All systems operational</span>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">Contact Messages</p>
+                        <p className="text-sm text-gray-500">{stats?.contacts || 0} total</p>
+                      </div>
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+                        <i className="fas fa-envelope"></i>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-primary mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center" 
+                    onClick={() => setActiveSection("news")}
+                  >
+                    <i className="fas fa-newspaper mr-2"></i> Manage News
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center" 
+                    onClick={() => setActiveSection("videos")}
+                  >
+                    <i className="fas fa-video mr-2"></i> Manage Videos
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center" 
+                    onClick={() => setActiveSection("contacts")}
+                  >
+                    <i className="fas fa-envelope mr-2"></i> View Messages
+                  </Button>
                 </div>
               </div>
             </div>
           )}
           
-          {/* News & Updates */}
+          {/* News & Updates section */}
           {activeSection === "news" && (
             <div>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Author
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {newsArticles.map((article) => (
-                      <tr key={article.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <img className="h-10 w-10 rounded-md object-cover" src={article.imageUrl} alt={article.title} />
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{article.title}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary bg-opacity-10 text-primary">
-                            {article.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(article.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {article.author}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="text-primary hover:text-primary/80 mr-4">
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to delete this article?")) {
-                                deleteNewsMutation.mutate(article.id);
-                              }
-                            }}
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {newsLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading news articles...</p>
+                </div>
+              ) : (
+                <NewsTable articles={newsArticles} onEdit={openEditForm} />
+              )}
             </div>
           )}
           
-          {/* Programs */}
+          {/* Programs section */}
           {activeSection === "programs" && (
             <div>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Program
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {programs.map((program) => (
-                      <tr key={program.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <img className="h-10 w-10 rounded-md object-cover" src={program.imageUrl} alt={program.title} />
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{program.title}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent bg-opacity-10 text-accent">
-                            {program.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500 line-clamp-2">
-                            {program.description}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="text-primary hover:text-primary/80 mr-4">
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to delete this program?")) {
-                                deleteProgramMutation.mutate(program.id);
-                              }
-                            }}
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {programsLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading programs...</p>
+                </div>
+              ) : (
+                <ProgramsTable programs={programs} onEdit={openEditForm} />
+              )}
             </div>
           )}
           
-          {/* Team Members */}
+          {/* Team Members section */}
           {activeSection === "team" && (
             <div>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Member
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Bio
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {teamMembers.map((member) => (
-                      <tr key={member.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <img className="h-10 w-10 rounded-full object-cover" src={member.imageUrl} alt={member.name} />
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary bg-opacity-10 text-primary">
-                            {member.title}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500 line-clamp-2">
-                            {member.bio}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="text-primary hover:text-primary/80 mr-4">
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to delete this team member?")) {
-                                deleteTeamMemberMutation.mutate(member.id);
-                              }
-                            }}
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {teamLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading team members...</p>
+                </div>
+              ) : (
+                <TeamMembersTable members={teamMembers} onEdit={openEditForm} />
+              )}
             </div>
           )}
           
-          {/* Videos */}
+          {/* Videos section */}
           {activeSection === "videos" && (
             <div>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Video
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Duration
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Views
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {videos.map((video) => (
-                      <tr key={video.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-16 relative">
-                              <img className="h-10 w-16 rounded-md object-cover" src={video.thumbnailUrl} alt={video.title} />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                                <i className="fas fa-play text-white text-xs"></i>
-                              </div>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{video.title}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent bg-opacity-10 text-accent">
-                            {video.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {video.duration}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {video.views.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="text-primary hover:text-primary/80 mr-4">
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button 
-                            className="text-red-600 hover:text-red-800"
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to delete this video?")) {
-                                deleteVideoMutation.mutate(video.id);
-                              }
-                            }}
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {videosLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading videos...</p>
+                </div>
+              ) : (
+                <VideosTable videos={videos} onEdit={openEditForm} />
+              )}
+            </div>
+          )}
+
+          {/* University section */}
+          {activeSection === "university" && (
+            <div>
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
+                <TabsList>
+                  <TabsTrigger value="courses">Courses</TabsTrigger>
+                  <TabsTrigger value="faculty">Faculty</TabsTrigger>
+                </TabsList>
+                <TabsContent value="courses">
+                  {coursesLoading ? (
+                    <div className="text-center py-8">
+                      <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                      <p className="mt-2 text-muted-foreground">Loading university courses...</p>
+                    </div>
+                  ) : (
+                    <UniversityCoursesTable courses={courses} onEdit={openEditForm} />
+                  )}
+                </TabsContent>
+                <TabsContent value="faculty">
+                  {facultyLoading ? (
+                    <div className="text-center py-8">
+                      <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                      <p className="mt-2 text-muted-foreground">Loading faculty members...</p>
+                    </div>
+                  ) : (
+                    <FacultyMembersTable faculty={faculty} onEdit={openEditForm} />
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+
+          {/* History Events section */}
+          {activeSection === "history" && (
+            <div>
+              {historyLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading history events...</p>
+                </div>
+              ) : (
+                <HistoryEventsTable events={historyEvents} onEdit={openEditForm} />
+              )}
             </div>
           )}
           
-          {/* Other sections... */}
-          {(activeSection === "donations" || activeSection === "volunteers" || activeSection === "contacts") && (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <div className="text-6xl text-gray-300 mb-4">
-                <i className={`fas ${
-                  activeSection === "donations" ? "fa-hand-holding-heart" : 
-                  activeSection === "volunteers" ? "fa-hands-helping" : 
-                  "fa-envelope"
-                }`}></i>
-              </div>
-              <h3 className="text-xl font-bold text-primary mb-2">
-                {activeSection === "donations" ? "Donations Section" : 
-                 activeSection === "volunteers" ? "Volunteers Section" : 
-                 "Contact Messages Section"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                This section is under development. Check back soon!
-              </p>
-              <button className="bg-primary hover:bg-opacity-90 text-white font-bold py-2 px-6 rounded-full transition duration-150">
-                <i className="fas fa-wrench mr-2"></i> Setup Now
-              </button>
+          {/* Donations section */}
+          {activeSection === "donations" && (
+            <div>
+              {donationsLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading donations...</p>
+                </div>
+              ) : (
+                <DonationsTable donations={donations} />
+              )}
+            </div>
+          )}
+          
+          {/* Volunteers section */}
+          {activeSection === "volunteers" && (
+            <div>
+              {volunteersLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading volunteer applications...</p>
+                </div>
+              ) : (
+                <VolunteersTable volunteers={volunteers} />
+              )}
+            </div>
+          )}
+          
+          {/* Contact Messages section */}
+          {activeSection === "contacts" && (
+            <div>
+              {contactsLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading contact messages...</p>
+                </div>
+              ) : (
+                <ContactMessagesTable messages={contactMessages} />
+              )}
+            </div>
+          )}
+
+          {/* Newsletter section */}
+          {activeSection === "newsletter" && (
+            <div>
+              {subscribersLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading newsletter subscribers...</p>
+                </div>
+              ) : (
+                <NewsletterSubscribersTable subscribers={subscribers} />
+              )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Add/Edit Form Dialog */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{getDialogTitle()}</DialogTitle>
+          </DialogHeader>
+          {renderFormDialog()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

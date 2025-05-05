@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Form,
@@ -12,19 +13,20 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 
-// Define the form schema
+// Form validation schema
 const historyFormSchema = z.object({
   year: z.coerce.number().int().positive("Year must be a positive number"),
-  title: z.string().min(3, "Title must be at least 3 characters"),
+  title: z.string().min(2, "Title must be at least 2 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  imageUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  sortOrder: z.coerce.number().int().nonnegative("Sort order must be a non-negative number")
+  imageUrl: z.string().url("Please enter a valid URL").optional(),
+  sortOrder: z.coerce.number().int().nonnegative("Sort order must be a non-negative number"),
 });
 
 type HistoryFormValues = z.infer<typeof historyFormSchema>;
@@ -44,20 +46,17 @@ interface HistoryEventFormProps {
 const HistoryEventForm = ({ event, onSuccess }: HistoryEventFormProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isEditing = !!event;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize the form
+  // Create form
   const form = useForm<HistoryFormValues>({
     resolver: zodResolver(historyFormSchema),
-    defaultValues: event ? {
-      ...event,
-      imageUrl: event.imageUrl || ""
-    } : {
-      year: new Date().getFullYear(),
-      title: "",
-      description: "",
-      imageUrl: "",
-      sortOrder: 0
+    defaultValues: {
+      year: event?.year || new Date().getFullYear(),
+      title: event?.title || "",
+      description: event?.description || "",
+      imageUrl: event?.imageUrl || "",
+      sortOrder: event?.sortOrder || 0,
     },
   });
 
@@ -72,16 +71,16 @@ const HistoryEventForm = ({ event, onSuccess }: HistoryEventFormProps) => {
         description: "History event created successfully",
         variant: "default",
       });
+      setIsSubmitting(false);
       onSuccess();
-      form.reset();
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to create history event",
         variant: "destructive",
       });
-      console.error("Error creating history event:", error);
+      setIsSubmitting(false);
     }
   });
 
@@ -96,30 +95,25 @@ const HistoryEventForm = ({ event, onSuccess }: HistoryEventFormProps) => {
         description: "History event updated successfully",
         variant: "default",
       });
+      setIsSubmitting(false);
       onSuccess();
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to update history event",
         variant: "destructive",
       });
-      console.error("Error updating history event:", error);
+      setIsSubmitting(false);
     }
   });
 
-  // Handle form submission
   const onSubmit = (data: HistoryFormValues) => {
-    const submitData = {
-      ...data,
-      // If imageUrl is empty string, set it to undefined
-      imageUrl: data.imageUrl && data.imageUrl.trim() !== "" ? data.imageUrl : undefined
-    };
-
-    if (isEditing) {
-      updateMutation.mutate(submitData);
+    setIsSubmitting(true);
+    if (event) {
+      updateMutation.mutate(data);
     } else {
-      createMutation.mutate(submitData);
+      createMutation.mutate(data);
     }
   };
 
@@ -127,123 +121,131 @@ const HistoryEventForm = ({ event, onSuccess }: HistoryEventFormProps) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="year"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Year</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="e.g. 1995" 
-                    {...field} 
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? "0" : e.target.value;
-                      field.onChange(parseInt(value, 10));
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="e.g., 1990" 
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? "0" : e.target.value;
+                          field.onChange(Number(value));
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="sortOrder"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sort Order</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Display order (lowest first)" 
-                    {...field} 
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? "0" : e.target.value;
-                      field.onChange(parseInt(value, 10));
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="sortOrder"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sort Order</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="e.g., 1" 
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? "0" : e.target.value;
+                          field.onChange(Number(value));
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Lower numbers appear first
+                    </p>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter event title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Enter event description" 
+                      className="min-h-[150px]" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image URL (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="mt-6">
+              {form.watch("imageUrl") && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="aspect-video">
+                      <img 
+                        src={form.watch("imageUrl")}
+                        alt="Event Image Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://via.placeholder.com/640x360?text=Event+Image";
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Event Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Title of the historical event" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Description of the historical event" 
-                  {...field} 
-                  rows={4}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
-              </FormControl>
-              <FormMessage />
-              {field.value && (
-                <div className="mt-2">
-                  <p className="text-sm text-muted-foreground mb-1">Preview:</p>
-                  <div className="relative h-40 w-full overflow-hidden rounded-md">
-                    <img 
-                      src={field.value} 
-                      alt="Preview" 
-                      className="object-cover w-full h-full" 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://via.placeholder.com/400x200?text=Invalid+Image+URL";
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </FormItem>
-          )}
-        />
-
         <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={onSuccess}>
+          <Button variant="outline" type="button" onClick={onSuccess}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            disabled={createMutation.isPending || updateMutation.isPending}
-          >
-            {createMutation.isPending || updateMutation.isPending 
-              ? "Saving..." 
-              : isEditing ? "Update Event" : "Add Event"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : event ? "Update Event" : "Add Event"}
           </Button>
         </div>
       </form>
