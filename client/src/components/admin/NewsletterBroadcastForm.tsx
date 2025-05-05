@@ -46,7 +46,11 @@ export default function NewsletterBroadcastForm({ subscriberCount }: NewsletterB
 
   const broadcastMutation = useMutation({
     mutationFn: async (data: BroadcastFormData) => {
-      return apiRequest("POST", "/api/newsletter/broadcast", data);
+      // Add the sendToAll parameter to send to all subscribers
+      return apiRequest("POST", "/api/newsletter/broadcast", {
+        ...data,
+        sendToAll: true
+      });
     },
     onMutate: () => {
       setStatus("sending");
