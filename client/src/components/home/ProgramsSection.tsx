@@ -57,10 +57,8 @@ const ProgramsSection = () => {
                   </span>
                   <h3 className="text-xl font-bold mb-3">{program.title}</h3>
                   <p className="mb-4">{program.description}</p>
-                  <Link href={`/programs/${program.slug}`}>
-                    <a className="inline-flex items-center text-accent font-semibold hover:underline">
-                      Learn more <i className="fas fa-arrow-right ml-2"></i>
-                    </a>
+                  <Link href={`/programs/${program.slug}`} className="inline-flex items-center text-accent font-semibold hover:underline">
+                    Learn more <i className="fas fa-arrow-right ml-2"></i>
                   </Link>
                 </div>
               </div>
