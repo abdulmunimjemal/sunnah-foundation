@@ -6,6 +6,17 @@ async function seed() {
   try {
     console.log("Starting database seeding...");
 
+    // Create session table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      )
+    `);
+    console.log("Session table created/verified");
+
     // Create admin user
     const existingUsers = await db.select().from(schema.users).where(schema.users.username = "admin");
     
