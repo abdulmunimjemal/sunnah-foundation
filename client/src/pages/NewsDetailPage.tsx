@@ -84,7 +84,17 @@ const NewsDetailPage = () => {
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [userId] = useState<string>(getUserId());
   const [userLiked, setUserLiked] = useState<boolean>(false);
-  
+  const [userNameExists, setUserNameExists] = useState(false);
+  const [userEmailExists, setUserEmailExists] = useState(false);
+
+  // Check local storage for name and email on mount
+  useEffect(() => {
+    const storedName = localStorage.getItem("userName");
+    const storedEmail = localStorage.getItem("userEmail");
+    setUserNameExists(!!storedName);
+    setUserEmailExists(!!storedEmail);
+  }, []);
+
   // Set page title
   useEffect(() => {
     document.title = "Article - Sunnah Foundation";
@@ -121,10 +131,13 @@ const NewsDetailPage = () => {
     if (userId && slug) {
       const checkLikeStatus = async () => {
         try {
-          const response = await apiRequest(`/api/news/${slug}/likes/check?userId=${encodeURIComponent(userId)}`);
+          // Corrected: Added 'GET' method and expect JSON response
+          const response = await apiRequest<{ liked: boolean }>("GET", `/api/news/${slug}/likes/check?userId=${encodeURIComponent(userId)}`);
           setUserLiked(response.liked);
         } catch (error) {
           console.error("Error checking like status:", error);
+          // Optionally handle the error, e.g., assume not liked
+          // setUserLiked(false);
         }
       };
       
@@ -145,26 +158,31 @@ const NewsDetailPage = () => {
   // Comment mutation
   const commentMutation = useMutation({
     mutationFn: async (values: CommentFormValues) => {
-      return await apiRequest(`/api/news/${slug}/comments`, {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
+      // Corrected: Pass method first, then URL, then data
+      return await apiRequest("POST", `/api/news/${slug}/comments`, values);
     },
     onSuccess: () => {
       toast({
         title: "Comment submitted",
-        description: "Your comment has been submitted for approval",
+        description: "Your comment has been submitted.",
       });
-      commentForm.reset({ 
-        name: commentForm.getValues("name"), 
-        email: commentForm.getValues("email"),
-        content: ""
-      });
-      setReplyingTo(null);
       
       // Save user name and email for future use
-      localStorage.setItem("userName", commentForm.getValues("name"));
-      localStorage.setItem("userEmail", commentForm.getValues("email"));
+      const currentName = commentForm.getValues("name");
+      const currentEmail = commentForm.getValues("email");
+      if (currentName && currentEmail) { // Only save if both are provided
+        localStorage.setItem("userName", currentName);
+        localStorage.setItem("userEmail", currentEmail);
+        setUserNameExists(true);
+        setUserEmailExists(true);
+      }
+
+      commentForm.reset({
+        name: localStorage.getItem("userName") || "", // Keep stored name/email
+        email: localStorage.getItem("userEmail") || "",
+        content: "" // Clear content
+      });
+      setReplyingTo(null);
       
       // Refetch article data to get updated comments
       queryClient.invalidateQueries({ queryKey: ['/api/news', slug] });
@@ -182,28 +200,24 @@ const NewsDetailPage = () => {
   // Like mutation
   const likeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/news/${slug}/likes`, {
-        method: "POST",
-        body: JSON.stringify({ userId }),
-      });
+      // Corrected: Pass method first, then URL, then data
+      return await apiRequest<{ liked: boolean, likeCount: number }>("POST", `/api/news/${slug}/likes`, { userId });
     },
     onSuccess: (response) => {
+      // Corrected: Access 'liked' property from the parsed JSON response
       setUserLiked(response.liked);
+
+      // Update the query data directly for immediate UI feedback
+      queryClient.setQueryData<ArticleData>(['/api/news', slug], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          likeCount: response.likeCount, // Assuming the API returns the new count
+        };
+      });
       
-      if (response.liked) {
-        toast({
-          title: "Liked!",
-          description: "Thanks for liking this article",
-        });
-      } else {
-        toast({
-          title: "Like removed",
-          description: "You have removed your like from this article",
-        });
-      }
-      
-      // Refetch article data to get updated like count
-      queryClient.invalidateQueries({ queryKey: ['/api/news', slug] });
+      // Optionally still invalidate if needed, though setQueryData might be sufficient
+      // queryClient.invalidateQueries({ queryKey: ['/api/news', slug] });
     },
     onError: (error: any) => {
       console.error("Error processing like:", error);
@@ -321,34 +335,41 @@ const NewsDetailPage = () => {
               <Form {...commentForm}>
                 <form onSubmit={commentForm.handleSubmit(onCommentSubmit)} className="space-y-4 bg-gray-50 p-4 rounded-lg">
                   <h4 className="text-sm font-semibold">Reply to {comment.name}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={commentForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Your name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                  {/* Conditionally render name and email fields in reply form */}
+                  {(!userNameExists || !userEmailExists) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {!userNameExists && (
+                        <FormField
+                          control={commentForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
-                    <FormField
-                      control={commentForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Your email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                      {!userEmailExists && (
+                        <FormField
+                          control={commentForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
-                  </div>
+                    </div>
+                  )}
                   <FormField
                     control={commentForm.control}
                     name="content"
@@ -534,36 +555,59 @@ const NewsDetailPage = () => {
                 {!replyingTo && (
                   <div className="bg-gray-50 p-6 rounded-lg">
                     <h3 className="font-bold text-lg mb-4">Leave a Comment</h3>
+                    {/* Display user info if available */}
+                    {userNameExists && userEmailExists && (
+                      <div className="mb-4 p-3 bg-blue-100 border border-blue-200 rounded-md text-sm">
+                        Commenting as: <span className="font-semibold">{localStorage.getItem("userName")}</span> ({localStorage.getItem("userEmail")})
+                        {/* Optional: Add a button to clear stored info */}
+                        <Button variant="link" size="sm" className="ml-2 h-auto p-0 text-blue-600 hover:text-blue-800" onClick={() => { 
+                          localStorage.removeItem('userName'); 
+                          localStorage.removeItem('userEmail'); 
+                          setUserNameExists(false); 
+                          setUserEmailExists(false); 
+                          commentForm.reset({ name: '', email: '', content: commentForm.getValues('content') }); 
+                        }}>
+                          Change
+                        </Button>
+                      </div>
+                    )}
                     <Form {...commentForm}>
                       <form onSubmit={commentForm.handleSubmit(onCommentSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={commentForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Your name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
+                        {/* Conditionally render name and email fields */}
+                        {(!userNameExists || !userEmailExists) && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {!userNameExists && (
+                              <FormField
+                                control={commentForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Your name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             )}
-                          />
-                          <FormField
-                            control={commentForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Your email" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
+                            {!userEmailExists && (
+                              <FormField
+                                control={commentForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Your email" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             )}
-                          />
-                        </div>
+                          </div>
+                        )}
                         <FormField
                           control={commentForm.control}
                           name="content"
