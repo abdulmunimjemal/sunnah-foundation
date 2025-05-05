@@ -10,12 +10,10 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, className, children }: PageHeaderProps) {
   return (
-    <div className={cn("py-16 px-4", className)}>
-      <div className="container mx-auto text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">{title}</h1>
-        {subtitle && <p className="text-lg md:text-xl max-w-2xl mx-auto mb-6">{subtitle}</p>}
-        {children}
-      </div>
+    <div className={cn("mb-8", className)}>
+      <h1 className="text-3xl md:text-4xl font-bold text-secondary tracking-tight">{title}</h1>
+      {subtitle && <p className="mt-2 text-lg text-muted-foreground">{subtitle}</p>}
+      {children && <div className="mt-4">{children}</div>}
     </div>
   );
 }

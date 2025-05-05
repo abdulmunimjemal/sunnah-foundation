@@ -948,6 +948,20 @@ const AdminPage = () => {
               )}
             </div>
           )}
+          
+          {/* Events section */}
+          {activeSection === "events" && (
+            <div>
+              {eventsLoading ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                  <p className="mt-2 text-muted-foreground">Loading events...</p>
+                </div>
+              ) : (
+                <EventsTable events={events} onEdit={openEditForm} />
+              )}
+            </div>
+          )}
         </div>
       </main>
 
