@@ -486,6 +486,66 @@ async function seed() {
       console.log("Faculty members already exist, skipping");
     }
 
+    // Seed site settings
+    const existingSettings = await db.select().from(schema.siteSettings);
+    
+    if (existingSettings.length === 0) {
+      await db.insert(schema.siteSettings).values([
+        {
+          key: "daewa_tv_url",
+          value: "https://www.youtube.com/channel/UCxxxxxxxxxx",
+          label: "Daewa TV YouTube Channel",
+          description: "URL to the Sunnah Foundation's Daewa TV YouTube channel",
+          group: "urls",
+          type: "url"
+        },
+        {
+          key: "sunnah_university_url",
+          value: "https://university.sunnahfoundation.org",
+          label: "Sunnah University Website",
+          description: "URL to the Sunnah University website",
+          group: "urls",
+          type: "url"
+        },
+        {
+          key: "contact_email",
+          value: "contact@sunnahfoundation.org",
+          label: "Contact Email",
+          description: "Primary contact email address",
+          group: "emails",
+          type: "email"
+        },
+        {
+          key: "facebook_url",
+          value: "https://www.facebook.com/sunnahfoundation",
+          label: "Facebook Page",
+          description: "URL to the Sunnah Foundation's Facebook page",
+          group: "social",
+          type: "url"
+        },
+        {
+          key: "twitter_url",
+          value: "https://twitter.com/sunnahfoundation",
+          label: "Twitter Profile",
+          description: "URL to the Sunnah Foundation's Twitter profile",
+          group: "social",
+          type: "url"
+        },
+        {
+          key: "instagram_url",
+          value: "https://www.instagram.com/sunnahfoundation",
+          label: "Instagram Profile",
+          description: "URL to the Sunnah Foundation's Instagram profile",
+          group: "social",
+          type: "url"
+        }
+      ]);
+      
+      console.log("Site settings seeded");
+    } else {
+      console.log("Site settings already exist, skipping");
+    }
+
     console.log("Database seeding completed successfully!");
   } catch (error) {
     console.error("Error during database seeding:", error);
