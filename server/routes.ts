@@ -893,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Middleware to check if user is authenticated
-function checkAuthenticated(req, res, next) {
+function checkAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }

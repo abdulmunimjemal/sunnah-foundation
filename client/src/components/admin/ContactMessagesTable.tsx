@@ -76,9 +76,7 @@ export function ContactMessagesTable({ messages }: ContactMessagesTableProps) {
 
   const deleteMessageMutation = useMutation({
     mutationFn: (id: number) =>
-      apiRequest(`/api/contact/${id}`, {
-        method: "DELETE",
-      }),
+      apiRequest("DELETE", `/api/contact/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contact"] });
       toast({

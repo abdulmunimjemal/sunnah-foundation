@@ -53,9 +53,7 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
 
   const deleteSubscriberMutation = useMutation({
     mutationFn: (id: number) =>
-      apiRequest(`/api/newsletter/subscribers/${id}`, {
-        method: "DELETE",
-      }),
+      apiRequest("DELETE", `/api/newsletter/subscribers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/newsletter/subscribers"] });
       toast({
@@ -76,10 +74,7 @@ export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscriber
 
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: number[]) =>
-      apiRequest(`/api/newsletter/subscribers/bulk`, {
-        method: "DELETE",
-        body: JSON.stringify({ ids }),
-      }),
+      apiRequest("DELETE", `/api/newsletter/subscribers/bulk`, { ids }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/newsletter/subscribers"] });
       toast({

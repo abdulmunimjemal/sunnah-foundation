@@ -58,15 +58,11 @@ const UniversitySection = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/university/courses">
-                <a className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
-                  Browse Courses
-                </a>
+              <Link href="/university/courses" className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
+                Browse Courses
               </Link>
-              <Link href="/university/admission">
-                <a className="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
-                  Apply for Admission
-                </a>
+              <Link href="/university/admission" className="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
+                Apply for Admission
               </Link>
             </div>
           </div>
