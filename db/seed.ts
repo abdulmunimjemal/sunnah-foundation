@@ -1,13 +1,29 @@
-import { db } from "./index";
+import { Pool } from 'pg'; // Use pg Pool for direct connection
+import { drizzle } from 'drizzle-orm/node-postgres'; // Use drizzle adapter for node-postgres
 import { sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import * as bcrypt from 'bcryptjs';
 import { eq } from "drizzle-orm";
 
+// Create a pg Pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Create a drizzle instance using the pg Pool
+const db = drizzle(pool, { schema });
+
 async function seed() {
   try {
     console.log("Starting database seeding...");
-    
+
+    // Check if DATABASE_URL is set (important!)
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL must be set in .env file for seeding.",
+      );
+    }
+
     // Seed program categories
     const existingProgramCategories = await db.select().from(schema.programCategories);
     
@@ -60,6 +76,9 @@ async function seed() {
     }
 
     // Create session table if it doesn't exist
+    // Note: Drizzle execute might not work the same way with pg as with neon.
+    // It's often better to let migrations handle table creation.
+    // However, keeping the existing logic for now.
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "session" (
         "sid" varchar NOT NULL COLLATE "default",
@@ -549,6 +568,10 @@ async function seed() {
     console.log("Database seeding completed successfully!");
   } catch (error) {
     console.error("Error during database seeding:", error);
+  } finally {
+    // Ensure the connection pool is closed after seeding
+    await pool.end();
+    console.log("Database connection pool closed.");
   }
 }
 
