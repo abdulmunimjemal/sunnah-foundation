@@ -62,10 +62,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/">
-            <a className="flex items-center">
-              <SunnahLogo className="h-16" />
-            </a>
+          <Link href="/" className="flex items-center">
+            <SunnahLogo className="h-16" />
           </Link>
         </div>
 
@@ -82,19 +80,15 @@ const Header = () => {
         <nav className="hidden md:flex space-x-6 items-center">
           {navigation.map((item) => (
             <div key={item.name} className={item.dropdown ? "relative group" : ""}>
-              <Link href={item.path}>
-                <a className="text-secondary hover:text-primary font-semibold flex items-center transition duration-150">
-                  {item.name} {item.dropdown && <i className="fas fa-chevron-down ml-1 text-xs"></i>}
-                </a>
+              <Link href={item.path} className="text-secondary hover:text-primary font-semibold flex items-center transition duration-150">
+                {item.name} {item.dropdown && <i className="fas fa-chevron-down ml-1 text-xs"></i>}
               </Link>
               {item.dropdown && (
                 <div className="absolute z-10 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
                   <div className="py-1">
                     {item.dropdown.map((dropdownItem) => (
-                      <Link key={dropdownItem.name} href={`${dropdownItem.path}${dropdownItem.hash || ''}`}>
-                        <a className="block px-4 py-2 text-sm text-secondary hover:bg-cream">
-                          {dropdownItem.name}
-                        </a>
+                      <Link key={dropdownItem.name} href={`${dropdownItem.path}${dropdownItem.hash || ''}`} className="block px-4 py-2 text-sm text-secondary hover:bg-cream">
+                        {dropdownItem.name}
                       </Link>
                     ))}
                   </div>
@@ -104,10 +98,8 @@ const Header = () => {
           ))}
         </nav>
 
-        <Link href="/get-involved#donate">
-          <a className="hidden md:block bg-accent hover:bg-opacity-90 text-white font-bold py-2 px-6 rounded-full transition duration-150">
-            Donate
-          </a>
+        <Link href="/get-involved#donate" className="hidden md:block bg-accent hover:bg-opacity-90 text-white font-bold py-2 px-6 rounded-full transition duration-150">
+          Donate
         </Link>
       </div>
 
@@ -127,28 +119,22 @@ const Header = () => {
                   </button>
                   <div className={`pl-4 space-y-1 ${expandedDropdowns[item.name] ? 'block' : 'hidden'}`}>
                     {item.dropdown.map((dropdownItem) => (
-                      <Link key={dropdownItem.name} href={`${dropdownItem.path}${dropdownItem.hash || ''}`}>
-                        <a className="block px-3 py-2 text-secondary hover:bg-cream rounded-md">
-                          {dropdownItem.name}
-                        </a>
+                      <Link key={dropdownItem.name} href={`${dropdownItem.path}${dropdownItem.hash || ''}`} className="block px-3 py-2 text-secondary hover:bg-cream rounded-md">
+                        {dropdownItem.name}
                       </Link>
                     ))}
                   </div>
                 </>
               ) : (
-                <Link href={item.path}>
-                  <a className="block px-3 py-2 text-secondary font-semibold hover:bg-cream rounded-md">
-                    {item.name}
-                  </a>
+                <Link href={item.path} className="block px-3 py-2 text-secondary font-semibold hover:bg-cream rounded-md">
+                  {item.name}
                 </Link>
               )}
             </div>
           ))}
           <div className="pt-2">
-            <Link href="/get-involved#donate">
-              <a className="w-full bg-accent hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-full transition duration-150 block text-center">
-                Donate
-              </a>
+            <Link href="/get-involved#donate" className="w-full bg-accent hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-full transition duration-150 block text-center">
+              Donate
             </Link>
           </div>
         </div>
