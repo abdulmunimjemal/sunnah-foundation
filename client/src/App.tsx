@@ -9,6 +9,7 @@ import ProgramsPage from "@/pages/ProgramsPage";
 import UniversityPage from "@/pages/UniversityPage";
 import GetInvolvedPage from "@/pages/GetInvolvedPage";
 import NewsPage from "@/pages/NewsPage";
+import NewsDetailPage from "@/pages/NewsDetailPage";
 import ContactPage from "@/pages/ContactPage";
 import EventsPage from "@/pages/EventsPage";
 import AdminPage from "@/pages/AdminPage";
@@ -28,6 +29,7 @@ function Router() {
           <Route path="/university" component={UniversityPage} />
           <Route path="/get-involved" component={GetInvolvedPage} />
           <Route path="/news" component={NewsPage} />
+          <Route path="/news/:slug" component={NewsDetailPage} />
           <Route path="/events" component={EventsPage} />
           <Route path="/contact" component={ContactPage} />
           <Route path="/admin/login" component={AdminLogin} />

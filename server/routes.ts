@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, count } from "drizzle-orm";
 import { db } from "@db";
 import * as schema from "@shared/schema";
 import {
@@ -13,6 +13,8 @@ import {
   insertVolunteerSchema,
   insertContactMessageSchema,
   insertNewsletterSubscriberSchema,
+  insertArticleCommentSchema,
+  insertArticleLikeSchema,
   newsletterBroadcastSchema,
   videos,
   newsletterSubscribers,
@@ -138,7 +140,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!article) {
         return res.status(404).json({ error: "Article not found" });
       }
-      res.json(article);
+      
+      // Get comments for the article
+      const comments = await db.query.articleComments.findMany({
+        where: eq(schema.articleComments.articleId, article.id),
+        orderBy: desc(schema.articleComments.createdAt),
+        with: {
+          replies: true
+        }
+      });
+      
+      // Get like count for the article
+      const likeCount = await db.select({ count: count() })
+        .from(schema.articleLikes)
+        .where(eq(schema.articleLikes.articleId, article.id));
+      
+      res.json({
+        article,
+        comments,
+        likeCount: likeCount[0]?.count || 0
+      });
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ error: "Failed to fetch article" });
@@ -180,6 +201,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting news article:", error);
       res.status(500).json({ error: "Failed to delete news article" });
+    }
+  });
+  
+  // Article comments API endpoints
+  app.post("/api/news/:slug/comments", async (req, res) => {
+    try {
+      const article = await storage.getNewsArticleBySlug(req.params.slug);
+      if (!article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+      
+      // Validate the comment data
+      const validatedData = insertArticleCommentSchema.parse({
+        ...req.body,
+        articleId: article.id
+      });
+      
+      // Validate email domain
+      const emailDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
+      const emailDomain = validatedData.email.split('@')[1].toLowerCase();
+      if (!emailDomains.includes(emailDomain)) {
+        return res.status(400).json({ 
+          error: "Invalid email domain",
+          message: "Please use a trusted email provider (Gmail, Outlook, Hotmail, Yahoo, or iCloud)."
+        });
+      }
+      
+      // Save the comment
+      const newComment = await db.insert(schema.articleComments)
+        .values(validatedData)
+        .returning();
+      
+      res.status(201).json(newComment[0]);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(400).json({ error: "Failed to create comment", details: error });
+    }
+  });
+  
+  // Article likes API endpoints
+  app.post("/api/news/:slug/likes", async (req, res) => {
+    try {
+      const article = await storage.getNewsArticleBySlug(req.params.slug);
+      if (!article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+      
+      // Validate the like data
+      const validatedData = insertArticleLikeSchema.parse({
+        ...req.body,
+        articleId: article.id
+      });
+      
+      // Check if user already liked this article
+      const existingLike = await db.select()
+        .from(schema.articleLikes)
+        .where(
+          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${validatedData.email}`
+        );
+      
+      if (existingLike.length > 0) {
+        // User already liked this article, unlike it
+        await db.delete(schema.articleLikes)
+          .where(
+            sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${validatedData.email}`
+          );
+        
+        // Get updated like count
+        const likeCount = await db.select({ count: count() })
+          .from(schema.articleLikes)
+          .where(eq(schema.articleLikes.articleId, article.id));
+        
+        return res.json({ liked: false, likeCount: likeCount[0]?.count || 0 });
+      }
+      
+      // Save the like
+      await db.insert(schema.articleLikes)
+        .values(validatedData);
+      
+      // Get updated like count
+      const likeCount = await db.select({ count: count() })
+        .from(schema.articleLikes)
+        .where(eq(schema.articleLikes.articleId, article.id));
+      
+      res.status(201).json({ liked: true, likeCount: likeCount[0]?.count || 0 });
+    } catch (error) {
+      console.error("Error processing like:", error);
+      res.status(400).json({ error: "Failed to process like", details: error });
+    }
+  });
+  
+  // Check if user liked an article
+  app.get("/api/news/:slug/likes/check", async (req, res) => {
+    try {
+      const email = req.query.email as string;
+      if (!email) {
+        return res.status(400).json({ error: "Email parameter is required" });
+      }
+      
+      const article = await storage.getNewsArticleBySlug(req.params.slug);
+      if (!article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+      
+      const existingLike = await db.select()
+        .from(schema.articleLikes)
+        .where(
+          sql`${schema.articleLikes.articleId} = ${article.id} AND ${schema.articleLikes.email} = ${email}`
+        );
+      
+      res.json({ liked: existingLike.length > 0 });
+    } catch (error) {
+      console.error("Error checking like status:", error);
+      res.status(500).json({ error: "Failed to check like status" });
     }
   });
 

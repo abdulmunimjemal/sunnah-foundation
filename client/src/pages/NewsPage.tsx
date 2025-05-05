@@ -152,10 +152,8 @@ const NewsPage = () => {
                             </div>
                             <h3 className="text-xl font-bold mb-3">{article.title}</h3>
                             <p className="mb-4">{article.excerpt}</p>
-                            <Link href={`/news/${article.slug}`}>
-                              <a className="inline-flex items-center text-accent font-semibold hover:underline">
-                                Read full story <i className="fas fa-arrow-right ml-2"></i>
-                              </a>
+                            <Link href={`/news/${article.slug}`} className="inline-flex items-center text-accent font-semibold hover:underline">
+                              Read full story <i className="fas fa-arrow-right ml-2"></i>
                             </Link>
                           </div>
                         </div>
@@ -284,8 +282,8 @@ const NewsPage = () => {
                   ) : (
                     articles.slice(0, 5).map(article => (
                       <li key={article.id} className="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
-                        <Link href={`/news/${article.slug}`}>
-                          <a className="font-semibold hover:text-accent transition">{article.title}</a>
+                        <Link href={`/news/${article.slug}`} className="font-semibold hover:text-accent transition">
+                          {article.title}
                         </Link>
                         <p className="text-sm text-gray-500">{formatDate(article.date)}</p>
                       </li>
