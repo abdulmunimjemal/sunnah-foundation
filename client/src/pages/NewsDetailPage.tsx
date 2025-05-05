@@ -404,7 +404,7 @@ const NewsDetailPage = () => {
     );
   }
 
-  if (error || !data) {
+  if (error || !data || !data.article) {
     return (
       <div className="bg-cream py-16 min-h-screen">
         <div className="container mx-auto px-4 text-center">
@@ -421,7 +421,7 @@ const NewsDetailPage = () => {
     );
   }
 
-  const { article, comments, likeCount } = data;
+  const { article, comments = [], likeCount = 0 } = data;
 
   return (
     <>
