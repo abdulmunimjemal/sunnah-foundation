@@ -1,105 +1,119 @@
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TablePaginationProps {
   currentPage: number;
-  totalItems: number;
-  pageSize: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
 }
 
 export function TablePagination({
   currentPage,
-  totalItems,
-  pageSize,
+  totalPages,
   onPageChange,
-  onPageSizeChange,
 }: TablePaginationProps) {
-  const totalPages = Math.ceil(totalItems / pageSize);
-  
-  // Ensure current page is valid when total items or page size changes
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      onPageChange(totalPages);
+  // Function to generate pagination range with ellipsis
+  const getPaginationRange = () => {
+    const delta = 2; // Number of pages to show on each side of current page
+    const range: Array<number | string> = [];
+    
+    // Always show first page
+    range.push(1);
+    
+    // Calculate start and end of range
+    const rangeStart = Math.max(2, currentPage - delta);
+    const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
+    
+    // Add ellipsis after first page if needed
+    if (rangeStart > 2) {
+      range.push("...");
     }
-  }, [totalItems, pageSize, currentPage, totalPages, onPageChange]);
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      onPageChange(currentPage - 1);
+    
+    // Add pages in the middle
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      range.push(i);
     }
+    
+    // Add ellipsis before last page if needed
+    if (rangeEnd < totalPages - 1) {
+      range.push("...");
+    }
+    
+    // Always show last page if more than 1 page
+    if (totalPages > 1) {
+      range.push(totalPages);
+    }
+    
+    return range;
   };
 
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage + 1);
-    }
-  };
+  if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between py-4">
-      <div className="flex items-center space-x-2">
-        <p className="text-sm text-muted-foreground">
-          Showing{" "}
-          <strong>
-            {totalItems === 0
-              ? 0
-              : (currentPage - 1) * pageSize + 1}
-          </strong>{" "}
-          to{" "}
-          <strong>
-            {Math.min(currentPage * pageSize, totalItems)}
-          </strong>{" "}
-          of <strong>{totalItems}</strong> items
-        </p>
-        <div className="flex items-center space-x-2">
-          <p className="text-sm text-muted-foreground">Rows per page</p>
-          <Select
-            value={pageSize.toString()}
-            onValueChange={(value) => onPageSizeChange(parseInt(value))}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={pageSize.toString()} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex items-center space-x-2">
+    <div className="flex items-center justify-between mt-6">
+      <div className="flex items-center gap-1">
         <Button
           variant="outline"
           size="icon"
-          onClick={handlePrevious}
-          disabled={currentPage <= 1}
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          aria-label="First page"
         >
-          <ChevronLeftIcon className="h-4 w-4" />
-          <span className="sr-only">Previous page</span>
+          <ChevronsLeft className="h-4 w-4" />
         </Button>
-        <div className="text-sm">
-          Page {totalPages === 0 ? 0 : currentPage} of {totalPages}
-        </div>
         <Button
           variant="outline"
           size="icon"
-          onClick={handleNext}
-          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Previous page"
         >
-          <ChevronRightIcon className="h-4 w-4" />
-          <span className="sr-only">Next page</span>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {getPaginationRange().map((page, index) => (
+          <React.Fragment key={index}>
+            {page === "..." ? (
+              <span className="px-3 py-2">...</span>
+            ) : (
+              <Button
+                variant={currentPage === page ? "default" : "outline"}
+                className={currentPage === page ? "bg-primary text-white" : ""}
+                onClick={() => typeof page === "number" && onPageChange(page)}
+              >
+                {page}
+              </Button>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          aria-label="Next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          aria-label="Last page"
+        >
+          <ChevronsRight className="h-4 w-4" />
         </Button>
       </div>
     </div>

@@ -88,6 +88,26 @@ const NewsDetailPage = () => {
   // Fetch article data
   const { data, isLoading, error } = useQuery<ArticleData>({
     queryKey: ['/api/news', slug],
+    queryFn: async () => {
+      // Direct fetching instead of using the default queryFn to handle the article data structure
+      if (!slug) throw new Error("No slug provided");
+      const result = await fetch(`/api/news/${slug}`);
+      if (!result.ok) throw new Error("Failed to fetch article");
+      
+      const rawData = await result.json();
+      
+      // If the API returns the article directly (without the expected structure)
+      if (rawData && !rawData.article && rawData.id) {
+        // Convert to expected structure
+        return {
+          article: rawData,
+          comments: [],
+          likeCount: 0
+        };
+      }
+      
+      return rawData;
+    },
     enabled: !!slug,
   });
 

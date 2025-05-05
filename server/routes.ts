@@ -141,25 +141,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Article not found" });
       }
       
-      // Get comments for the article
-      const comments = await db.query.articleComments.findMany({
-        where: eq(schema.articleComments.articleId, article.id),
-        orderBy: desc(schema.articleComments.createdAt),
-        with: {
-          replies: true
-        }
-      });
-      
-      // Get like count for the article
-      const likeCount = await db.select({ count: count() })
-        .from(schema.articleLikes)
-        .where(eq(schema.articleLikes.articleId, article.id));
-      
-      res.json({
-        article,
-        comments,
-        likeCount: likeCount[0]?.count || 0
-      });
+      try {
+        // Get comments for the article
+        const comments = await db.query.articleComments.findMany({
+          where: eq(schema.articleComments.articleId, article.id),
+          orderBy: desc(schema.articleComments.createdAt),
+        });
+
+        // Organize comments into parent/child relationships
+        const commentMap = new Map();
+        const topLevelComments = [];
+
+        // First pass: Create a map of all comments by ID
+        comments.forEach(comment => {
+          commentMap.set(comment.id, { ...comment, replies: [] });
+        });
+
+        // Second pass: Organize into parent/child structure
+        comments.forEach(comment => {
+          if (comment.parentId) {
+            const parent = commentMap.get(comment.parentId);
+            if (parent) {
+              parent.replies.push(commentMap.get(comment.id));
+            }
+          } else {
+            topLevelComments.push(commentMap.get(comment.id));
+          }
+        });
+        
+        // Get like count for the article
+        const likeCount = await db.select({ count: count() })
+          .from(schema.articleLikes)
+          .where(eq(schema.articleLikes.articleId, article.id));
+        
+        res.json({
+          article,
+          comments: topLevelComments,
+          likeCount: likeCount[0]?.count || 0
+        });
+      } catch (commentError) {
+        console.error("Error fetching comments and likes:", commentError);
+        // If there's an error with comments/likes, still return the article
+        res.json({ 
+          article,
+          comments: [],
+          likeCount: 0
+        });
+      }
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ error: "Failed to fetch article" });
