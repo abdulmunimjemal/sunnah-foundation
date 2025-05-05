@@ -17,6 +17,7 @@ import {
   newsCategories,
   videoCategories,
   events,
+  siteSettings,
   type InsertNewsArticle,
   type InsertProgram,
   type InsertTeamMember,
@@ -25,7 +26,9 @@ import {
   type InsertVolunteer,
   type InsertContactMessage,
   type InsertNewsletterSubscriber,
-  type InsertEvent
+  type InsertEvent,
+  type InsertSiteSetting,
+  type SiteSetting
 } from "@shared/schema";
 import * as bcrypt from 'bcryptjs';
 
@@ -287,5 +290,37 @@ export const storage = {
       contacts: contactsCount[0].count,
       events: eventsCount[0].count
     };
+  },
+
+  // Site settings functions
+  async getAllSettings() {
+    return db.select().from(siteSettings).orderBy(asc(siteSettings.group), asc(siteSettings.key));
+  },
+
+  async getSettingsByGroup(group: string) {
+    return db.select().from(siteSettings).where(eq(siteSettings.group, group)).orderBy(asc(siteSettings.key));
+  },
+
+  async getSettingByKey(key: string) {
+    const result = await db.select().from(siteSettings).where(eq(siteSettings.key, key));
+    return result[0] || null;
+  },
+
+  async createSetting(setting: InsertSiteSetting) {
+    const [newSetting] = await db.insert(siteSettings).values(setting).returning();
+    return newSetting;
+  },
+
+  async updateSetting(key: string, value: string) {
+    const [updatedSetting] = await db
+      .update(siteSettings)
+      .set({ value, updatedAt: new Date() })
+      .where(eq(siteSettings.key, key))
+      .returning();
+    return updatedSetting;
+  },
+
+  async deleteSetting(id: number) {
+    return db.delete(siteSettings).where(eq(siteSettings.id, id));
   }
 };

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -428,3 +428,28 @@ export const newsletterBroadcastSchema = z.object({
   testEmail: z.string().email("Invalid email address").optional(),
   sendToAll: z.boolean().default(false)
 });
+
+// Site settings table
+export const siteSettings = pgTable("site_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(),
+  label: varchar("label", { length: 255 }).notNull(),
+  description: text("description"),
+  group: varchar("group", { length: 100 }).notNull().default("general"),
+  type: varchar("type", { length: 50 }).notNull().default("text"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schema for site settings
+export const insertSiteSettingSchema = createInsertSchema(siteSettings, {
+  key: (schema) => schema.min(2, "Key must be at least 2 characters"),
+  value: (schema) => schema.min(1, "Value is required"),
+  label: (schema) => schema.min(2, "Label must be at least 2 characters"),
+});
+
+export const siteSettingsRelations = relations(siteSettings, ({ }) => ({}));
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
