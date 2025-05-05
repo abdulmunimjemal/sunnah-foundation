@@ -241,10 +241,12 @@ const AdminPage = () => {
   });
 
   // News categories
-  const { data: newsCategories = [] } = useQuery<string[]>({
+  const { data: rawNewsCategories = [] } = useQuery<{id: number, name: string, createdAt: string}[]>({
     queryKey: ['/api/news/categories'],
     enabled: isAuthenticated && (activeSection === "news" || formDialogOpen)
   });
+  // Extract just the names for the form
+  const newsCategories = rawNewsCategories.map(cat => cat.name);
 
   // Programs
   const { data: programs = [], isLoading: programsLoading } = useQuery<Program[]>({
@@ -253,10 +255,12 @@ const AdminPage = () => {
   });
 
   // Program categories
-  const { data: programCategories = [] } = useQuery<string[]>({
+  const { data: rawProgramCategories = [] } = useQuery<{id: number, name: string, createdAt: string}[]>({
     queryKey: ['/api/programs/categories'],
     enabled: isAuthenticated && (activeSection === "programs" || formDialogOpen)
   });
+  // Extract just the names for the form
+  const programCategories = rawProgramCategories.map(cat => cat.name);
 
   // Team members
   const { data: teamMembers = [], isLoading: teamLoading } = useQuery<TeamMember[]>({
@@ -271,10 +275,12 @@ const AdminPage = () => {
   });
 
   // Video categories
-  const { data: videoCategories = [] } = useQuery<string[]>({
+  const { data: rawVideoCategories = [] } = useQuery<{id: number, name: string, createdAt: string}[]>({
     queryKey: ['/api/videos/categories'],
     enabled: isAuthenticated && (activeSection === "videos" || formDialogOpen)
   });
+  // Extract just the names for the form
+  const videoCategories = rawVideoCategories.map(cat => cat.name);
 
   // University courses
   const { data: courses = [], isLoading: coursesLoading } = useQuery<UniversityCourse[]>({
