@@ -22,7 +22,7 @@ interface TableFilterProps {
 }
 
 export function TableFilter({
-  filterOptions,
+  filterOptions = [],
   filters,
   onFilterChange,
 }: TableFilterProps) {
@@ -30,7 +30,7 @@ export function TableFilter({
     onFilterChange(key, value === "all" ? "" : value);
   };
 
-  if (!filterOptions || filterOptions.length === 0) {
+  if (!Array.isArray(filterOptions) || filterOptions.length === 0) {
     return null;
   }
 
