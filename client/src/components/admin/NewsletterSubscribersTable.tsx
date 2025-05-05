@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Trash, CheckCircle, UserMinus } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+
 import {
   Table,
   TableBody,
@@ -8,10 +12,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 interface NewsletterSubscriber {
   id: number;
@@ -26,186 +46,210 @@ interface NewsletterSubscribersTableProps {
 export function NewsletterSubscribersTable({ subscribers }: NewsletterSubscribersTableProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedSubscriber, setSelectedSubscriber] = useState<NewsletterSubscriber | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [selectedSubscribers, setSelectedSubscribers] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/newsletter/subscribers/${id}`, {}),
+  const deleteSubscriberMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/api/newsletter/subscribers/${id}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/newsletter/subscribers'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/newsletter/subscribers"] });
       toast({
         title: "Success",
         description: "Subscriber removed successfully",
-        variant: "default",
       });
+      setConfirmDelete(false);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to remove subscriber",
         variant: "destructive",
       });
-    }
+      console.error("Error removing subscriber:", error);
+    },
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: number[]) => apiRequest("DELETE", `/api/newsletter/subscribers/bulk`, { ids }),
+    mutationFn: (ids: number[]) =>
+      apiRequest(`/api/newsletter/subscribers/bulk`, {
+        method: "DELETE",
+        body: JSON.stringify({ ids }),
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/newsletter/subscribers'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/newsletter/subscribers"] });
       toast({
         title: "Success",
-        description: "Selected subscribers removed successfully",
-        variant: "default",
+        description: `${selectedSubscribers.length} subscribers removed successfully`,
       });
       setSelectedSubscribers([]);
-      setSelectAll(false);
+      setConfirmBulkDelete(false);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to remove subscribers",
         variant: "destructive",
       });
-    }
+      console.error("Error removing subscribers:", error);
+    },
   });
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to remove this subscriber? This action cannot be undone.")) {
-      deleteMutation.mutate(id);
+  const handleDelete = (subscriber: NewsletterSubscriber) => {
+    setSelectedSubscriber(subscriber);
+    setConfirmDelete(true);
+  };
+
+  const confirmDeleteSubscriber = () => {
+    if (selectedSubscriber) {
+      deleteSubscriberMutation.mutate(selectedSubscriber.id);
     }
   };
 
   const handleBulkDelete = () => {
-    if (selectedSubscribers.length === 0) return;
-    
-    if (confirm(`Are you sure you want to remove ${selectedSubscribers.length} subscribers? This action cannot be undone.`)) {
+    if (selectedSubscribers.length > 0) {
+      setConfirmBulkDelete(true);
+    } else {
+      toast({
+        title: "No subscribers selected",
+        description: "Please select at least one subscriber to remove",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmBulkDeleteSubscribers = () => {
+    if (selectedSubscribers.length > 0) {
       bulkDeleteMutation.mutate(selectedSubscribers);
     }
   };
 
   const toggleSelectAll = () => {
-    if (selectAll) {
+    if (selectedSubscribers.length === subscribers.length) {
       setSelectedSubscribers([]);
     } else {
-      setSelectedSubscribers(subscribers.map(s => s.id));
+      setSelectedSubscribers(subscribers.map(subscriber => subscriber.id));
     }
-    setSelectAll(!selectAll);
   };
 
   const toggleSelectSubscriber = (id: number) => {
-    setSelectedSubscribers(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(s => s !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
-  };
-
-  // Function to export the subscribers list
-  const exportSubscribers = () => {
-    // Create CSV content
-    const headers = ["Email", "Subscribed Date"];
-    const csvContent = 
-      headers.join(",") + "\n" + 
-      subscribers.map(s => {
-        return `${s.email},${new Date(s.createdAt).toLocaleDateString()}`;
-      }).join("\n");
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `newsletter_subscribers_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (selectedSubscribers.includes(id)) {
+      setSelectedSubscribers(selectedSubscribers.filter(subscriberId => subscriberId !== id));
+    } else {
+      setSelectedSubscribers([...selectedSubscribers, id]);
+    }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <span className="text-sm text-muted-foreground">{subscribers.length} subscribers total</span>
-        </div>
-        <div className="flex space-x-2">
+    <div className="space-y-4">
+      {subscribers.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="selectAll"
+              checked={selectedSubscribers.length === subscribers.length && subscribers.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+            <label htmlFor="selectAll" className="text-sm font-medium">
+              Select All ({subscribers.length})
+            </label>
+          </div>
           {selectedSubscribers.length > 0 && (
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              {bulkDeleteMutation.isPending 
-                ? "Removing..." 
-                : `Remove Selected (${selectedSubscribers.length})`}
+            <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+              <UserMinus className="mr-2 h-4 w-4" />
+              Remove Selected ({selectedSubscribers.length})
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={exportSubscribers}
-          >
-            Export CSV
-          </Button>
         </div>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      )}
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50px]"></TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="w-[150px]">Subscribed On</TableHead>
+            <TableHead className="text-right w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {subscribers.length === 0 && (
             <TableRow>
-              <TableHead className="w-[40px]">
-                <input 
-                  type="checkbox" 
-                  checked={selectAll}
-                  onChange={toggleSelectAll}
-                  className="rounded"
-                />
-              </TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Subscribed Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No newsletter subscribers found
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subscribers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                  No newsletter subscribers found
-                </TableCell>
-              </TableRow>
-            ) : (
-              subscribers.map((subscriber) => (
-                <TableRow key={subscriber.id} className="group">
-                  <TableCell>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedSubscribers.includes(subscriber.id)}
-                      onChange={() => toggleSelectSubscriber(subscriber.id)}
-                      className="rounded"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{subscriber.email}</TableCell>
-                  <TableCell>{formatDate(subscriber.createdAt)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(subscriber.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      {deleteMutation.isPending ? "Removing..." : "Remove"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          )}
+          {subscribers.map((subscriber) => (
+            <TableRow key={subscriber.id}>
+              <TableCell>
+                <Checkbox 
+                  checked={selectedSubscribers.includes(subscriber.id)}
+                  onCheckedChange={() => toggleSelectSubscriber(subscriber.id)}
+                />
+              </TableCell>
+              <TableCell className="font-medium">{subscriber.email}</TableCell>
+              <TableCell>{formatDate(subscriber.createdAt)}</TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(subscriber)}
+                  title="Remove subscriber"
+                >
+                  <Trash className="h-4 w-4 text-destructive" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Individual Delete confirmation dialog */}
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {selectedSubscriber?.email} from the newsletter? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteSubscriber}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete confirmation dialog */}
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Multiple Subscribers</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {selectedSubscribers.length} subscribers from the newsletter? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBulkDeleteSubscribers}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
