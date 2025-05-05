@@ -51,8 +51,7 @@ export const storage = {
   },
 
   async getNewsCategories() {
-    const result = await db.select({ category: newsArticles.category }).from(newsArticles).groupBy(newsArticles.category);
-    return result.map(item => item.category);
+    return await db.select().from(schema.newsCategories).orderBy(schema.newsCategories.name);
   },
 
   async createNewsArticle(article: InsertNewsArticle) {
@@ -88,8 +87,7 @@ export const storage = {
   },
 
   async getProgramCategories() {
-    const result = await db.select({ category: programs.category }).from(programs).groupBy(programs.category);
-    return result.map(item => item.category);
+    return await db.select().from(schema.programCategories).orderBy(schema.programCategories.name);
   },
 
   async createProgram(program: InsertProgram) {
