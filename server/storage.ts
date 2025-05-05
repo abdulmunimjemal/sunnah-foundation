@@ -13,6 +13,10 @@ import {
   historyEvents,
   universityCourses,
   facultyMembers,
+  programCategories,
+  newsCategories,
+  videoCategories,
+  events,
   type InsertNewsArticle,
   type InsertProgram,
   type InsertTeamMember,
@@ -20,7 +24,8 @@ import {
   type InsertDonation,
   type InsertVolunteer,
   type InsertContactMessage,
-  type InsertNewsletterSubscriber
+  type InsertNewsletterSubscriber,
+  type InsertEvent
 } from "@shared/schema";
 import * as bcrypt from 'bcryptjs';
 
@@ -51,7 +56,7 @@ export const storage = {
   },
 
   async getNewsCategories() {
-    return await db.select().from(schema.newsCategories).orderBy(schema.newsCategories.name);
+    return await db.select().from(newsCategories).orderBy(newsCategories.name);
   },
 
   async createNewsArticle(article: InsertNewsArticle) {
@@ -87,7 +92,7 @@ export const storage = {
   },
 
   async getProgramCategories() {
-    return await db.select().from(schema.programCategories).orderBy(schema.programCategories.name);
+    return await db.select().from(programCategories).orderBy(programCategories.name);
   },
 
   async createProgram(program: InsertProgram) {
@@ -150,8 +155,7 @@ export const storage = {
   },
 
   async getVideoCategories() {
-    const result = await db.select({ category: videos.category }).from(videos).groupBy(videos.category);
-    return result.map(item => item.category);
+    return await db.select().from(videoCategories).orderBy(videoCategories.name);
   },
 
   async createVideo(video: InsertVideo) {
@@ -231,6 +235,37 @@ export const storage = {
     return newSubscriber;
   },
 
+  // Events functions
+  async getAllEvents() {
+    return db.select().from(events).orderBy(asc(events.date));
+  },
+
+  async getUpcomingEvents() {
+    return db.select().from(events).where(eq(events.isPast, false)).orderBy(asc(events.date));
+  },
+
+  async getPastEvents() {
+    return db.select().from(events).where(eq(events.isPast, true)).orderBy(desc(events.date));
+  },
+
+  async createEvent(event: InsertEvent) {
+    const [newEvent] = await db.insert(events).values(event).returning();
+    return newEvent;
+  },
+
+  async updateEvent(id: number, event: InsertEvent) {
+    const [updatedEvent] = await db
+      .update(events)
+      .set({ ...event, updatedAt: new Date() })
+      .where(eq(events.id, id))
+      .returning();
+    return updatedEvent;
+  },
+
+  async deleteEvent(id: number) {
+    return db.delete(events).where(eq(events.id, id));
+  },
+
   // Admin stats
   async getAdminStats() {
     const articlesCount = await db.select({ count: sql<number>`count(*)` }).from(newsArticles);
@@ -240,6 +275,7 @@ export const storage = {
     const donationsCount = await db.select({ count: sql<number>`count(*)` }).from(donations);
     const volunteersCount = await db.select({ count: sql<number>`count(*)` }).from(volunteers);
     const contactsCount = await db.select({ count: sql<number>`count(*)` }).from(contactMessages);
+    const eventsCount = await db.select({ count: sql<number>`count(*)` }).from(events);
 
     return {
       articles: articlesCount[0].count,
@@ -248,7 +284,8 @@ export const storage = {
       videos: videosCount[0].count,
       donations: donationsCount[0].count,
       volunteers: volunteersCount[0].count,
-      contacts: contactsCount[0].count
+      contacts: contactsCount[0].count,
+      events: eventsCount[0].count
     };
   }
 };

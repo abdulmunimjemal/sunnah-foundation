@@ -212,6 +212,7 @@ export const universityCourses = pgTable("university_courses", {
   duration: text("duration").notNull(),
   instructors: jsonb("instructors").notNull(),
   imageUrl: text("image_url").notNull(),
+  applicationLink: text("application_link"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -331,3 +332,32 @@ export type InsertNewsCategory = z.infer<typeof insertNewsCategorySchema>;
 
 export type VideoCategory = typeof videoCategories.$inferSelect;
 export type InsertVideoCategory = z.infer<typeof insertVideoCategorySchema>;
+
+// Events table
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  date: date("date").notNull(),
+  time: text("time").notNull(),
+  location: text("location").notNull(),
+  imageUrl: text("image_url").notNull(),
+  registrationLink: text("registration_link"),
+  isPast: boolean("is_past").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schema for events
+export const insertEventSchema = createInsertSchema(events, {
+  title: (schema) => schema.min(3, "Title must be at least 3 characters"),
+  description: (schema) => schema.min(10, "Description must be at least 10 characters"),
+  location: (schema) => schema.min(3, "Location must be at least 3 characters"),
+});
+
+// Event relations
+export const eventsRelations = relations(events, ({ }) => ({}));
+
+// Event type
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
