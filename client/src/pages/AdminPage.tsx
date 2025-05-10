@@ -980,10 +980,6 @@ const AdminPage = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-semibold">Events</h2>
-                    <Button onClick={openAddForm}>
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      Add Event
-                    </Button>
                   </div>
                   <EventsTable events={events} onEdit={openEditForm} />
                 </div>

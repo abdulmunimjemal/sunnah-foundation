@@ -149,10 +149,6 @@ export function EventsTable({ events, onEdit }: EventsTableProps) {
           placeholderText="Search events..."
           className="w-full md:w-auto"
         />
-        <Button onClick={() => onEdit({ id: 0 } as Event)} className="whitespace-nowrap">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Add Event
-        </Button>
       </div>
 
       <div className="rounded-md border bg-white">
