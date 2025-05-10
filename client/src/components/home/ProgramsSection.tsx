@@ -52,7 +52,7 @@ const ProgramsSection = () => {
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-6">
-                  <span className="inline-block px-3 py-1 bg-primary bg-opacity-10 text-primary rounded-full text-sm font-semibold mb-4">
+                  <span className="inline-block text-white px-3 py-1 bg-primary bg-opacity-10 text-primary rounded-full text-sm font-semibold mb-4">
                     {program.category}
                   </span>
                   <h3 className="text-xl font-bold mb-3">{program.title}</h3>

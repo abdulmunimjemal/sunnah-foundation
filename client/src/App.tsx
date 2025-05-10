@@ -16,11 +16,16 @@ import AdminPage from "@/pages/AdminPage";
 import AdminLogin from "@/pages/AdminLogin";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { useRoute } from "wouter";
 
 function Router() {
+  const [isAdminRoot] = useRoute("/admin");
+  const [isAdminWildcard] = useRoute("/admin/:rest*");
+  const isAdmin = isAdminRoot || isAdminWildcard;
+
   return (
     <>
-      <Header />
+      {!isAdmin && <Header />}
       <main>
         <Switch>
           <Route path="/" component={HomePage} />
@@ -37,7 +42,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
-      <Footer />
+      {!isAdmin && <Footer />}
     </>
   );
 }
