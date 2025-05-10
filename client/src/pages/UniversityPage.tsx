@@ -165,10 +165,10 @@ const UniversityPage = () => {
                                   <h4 className="text-xl font-bold mb-2">{course.title}</h4>
                                   <p className="mb-4">{course.description}</p>
                                   <div className="flex flex-wrap gap-2 mb-4">
-                                    <span className="bg-primary bg-opacity-10 text-primary text-sm font-semibold px-3 py-1 rounded-full">
+                                    <span className="bg-primary bg-opacity-10 text-white text-sm font-semibold px-3 py-1 rounded-full">
                                       Level: {course.level}
                                     </span>
-                                    <span className="bg-primary bg-opacity-10 text-primary text-sm font-semibold px-3 py-1 rounded-full">
+                                    <span className="bg-primary bg-opacity-10 text-white text-sm font-semibold px-3 py-1 rounded-full">
                                       Duration: {course.duration}
                                     </span>
                                   </div>
