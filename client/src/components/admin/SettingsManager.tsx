@@ -123,10 +123,7 @@ export default function SettingsManager() {
   const updateSettingMutation = useMutation({
     mutationFn: async (values: UpdateSettingFormValues) => {
       if (!selectedSetting) throw new Error("No setting selected");
-      return await apiRequest(`/api/settings/${selectedSetting.key}`, {
-        method: "PATCH",
-        body: JSON.stringify(values),
-      });
+      return await apiRequest("PATCH", `/api/settings/${selectedSetting.key}`, values);
     },
     onSuccess: () => {
       toast({
@@ -149,10 +146,7 @@ export default function SettingsManager() {
   // Create setting mutation
   const createSettingMutation = useMutation({
     mutationFn: async (values: CreateSettingFormValues) => {
-      return await apiRequest('/api/settings', {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
+      return await apiRequest("POST", '/api/settings', values);
     },
     onSuccess: () => {
       toast({
@@ -175,9 +169,7 @@ export default function SettingsManager() {
   // Delete setting mutation
   const deleteSettingMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/settings/${id}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/settings/${id}`);
     },
     onSuccess: () => {
       toast({
