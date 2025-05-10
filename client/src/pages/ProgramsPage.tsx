@@ -107,7 +107,7 @@ const ProgramsPage = () => {
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-6">
-                        <span className="inline-block px-3 py-1 bg-primary bg-opacity-10 text-primary rounded-full text-sm font-semibold mb-4">
+                        <span className="inline-block px-3 py-1 bg-primary bg-opacity-10 text-white rounded-full text-sm font-semibold mb-4">
                           {program.category}
                         </span>
                         <h3 className="text-xl font-bold mb-3">{program.title}</h3>
@@ -143,7 +143,7 @@ const ProgramsPage = () => {
               />
             </div>
             <div className="lg:w-1/2">
-              <span className="inline-block px-3 py-1 bg-primary bg-opacity-10 text-primary rounded-full text-sm font-semibold mb-4">
+              <span className="inline-block px-3 py-1 bg-primary bg-opacity-10 text-white rounded-full text-sm font-semibold mb-4">
                 Featured Program
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-primary font-heading mb-6">Youth Development</h2>
