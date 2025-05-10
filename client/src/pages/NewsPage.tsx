@@ -146,7 +146,7 @@ const NewsPage = () => {
                                 <i className="far fa-calendar-alt mr-1"></i> {formatDate(article.date)}
                               </span>
                               <span className="mx-2 text-gray-300">|</span>
-                              <span className="inline-block px-2 py-1 bg-primary bg-opacity-10 text-primary rounded text-xs">
+                              <span className="inline-block px-2 py-1 bg-primary bg-opacity-10 text-white rounded text-xs">
                                 {article.category}
                               </span>
                             </div>
