@@ -1,4 +1,6 @@
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const UniversitySection = () => {
   const degreePrograms = [
@@ -14,6 +16,33 @@ const UniversitySection = () => {
     "Online distance learning",
     "Blended learning options"
   ];
+
+  interface Setting {
+  key: string;
+  value: string;
+  }
+  
+  const { data: settings = [], isLoading } = useQuery<Setting[]>({
+    queryKey: ["settings"],
+    queryFn: () => apiRequest("GET", "/api/settings").then(res => res.json()),
+    refetchOnWindowFocus: false,
+  });
+
+  const getSetting = (key: string, fallback: string) =>
+    settings.find(s => s.key === key)?.value || fallback;
+
+  const browseCoursesUrl     = getSetting("browseCoursesUrl", "/programs");
+  const applyForAdmissionUrl = getSetting("applyForAdmissionUrl", "/university");
+
+  if (isLoading) {
+    return (
+      <section id="university" className="py-16 bg-white">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-lg text-gray-500">Loading university information…</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="university" className="py-16 bg-white">
@@ -58,10 +87,16 @@ const UniversitySection = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/university/courses" className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
+              <Link
+                href={browseCoursesUrl}
+                className="bg-accent hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150"
+              >
                 Browse Courses
               </Link>
-              <Link href="/university/admission" className="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150">
+              <Link
+                href={applyForAdmissionUrl}
+                className="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full transition duration-150"
+              >
                 Apply for Admission
               </Link>
             </div>
