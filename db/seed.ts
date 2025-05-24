@@ -8,6 +8,9 @@ import { eq } from "drizzle-orm";
 // Create a pg Pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  // Add SSL configuration for development to allow self-signed certificates
+  // In production, ensure your DATABASE_URL from Aiven includes ?sslmode=require
+  ssl:{ rejectUnauthorized: false }
 });
 
 // Create a drizzle instance using the pg Pool
@@ -118,7 +121,7 @@ async function seed() {
           date: new Date("2023-06-15"),
           imageUrl: "https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
           category: "Event",
-          author: "Admin",
+          author: "Fatuma Ahmed",
           slug: "annual-conference-global-attendance"
         },
         {
@@ -128,7 +131,7 @@ async function seed() {
           date: new Date("2023-05-28"),
           imageUrl: "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
           category: "Program",
-          author: "Admin",
+          author: "Mohammed Ali",
           slug: "youth-leadership-program-launch"
         },
         {
@@ -138,7 +141,7 @@ async function seed() {
           date: new Date("2023-05-10"),
           imageUrl: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
           category: "Community",
-          author: "Admin",
+          author: "Aisha Ibrahim",
           slug: "volunteers-serve-meals-community"
         },
         {
@@ -148,7 +151,7 @@ async function seed() {
           date: new Date("2023-04-22"),
           imageUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
           category: "Partnership",
-          author: "Admin",
+          author: "Yusuf Omar",
           slug: "partnership-global-education-network"
         }
       ]);
@@ -224,50 +227,50 @@ async function seed() {
     if (existingTeamMembers.length === 0) {
       await db.insert(schema.teamMembers).values([
         {
-          name: "Dr. Ahmad Ibrahim",
+          name: "Dr. Kemal Abubeker",
           title: "Executive Director",
-          bio: "Ph.D. in Islamic Studies with over 20 years of experience in educational leadership.",
+          bio: "Ph.D. in Islamic Governance with over 15 years of experience in community leadership and development in Ethiopia.",
           imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
           socialLinks: JSON.stringify({
-            linkedin: "https://linkedin.com/in/ahmad-ibrahim",
-            twitter: "https://twitter.com/ahmad_ibrahim",
-            email: "ahmad.ibrahim@sunnahfoundation.org"
+            linkedin: "https://linkedin.com/in/kemal-abubeker",
+            twitter: "https://twitter.com/kemal_abubeker",
+            email: "kemal.abubeker@sunnahfoundation.org"
           }),
           isLeadership: true
         },
         {
-          name: "Dr. Aisha Rahman",
+          name: "Dr. Samira Hassan",
           title: "Academic Director",
-          bio: "Specialist in Islamic curriculum development with extensive teaching experience.",
+          bio: "Specialist in Islamic curriculum development for Horn of Africa contexts, with extensive teaching experience in Addis Ababa.",
           imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
           socialLinks: JSON.stringify({
-            linkedin: "https://linkedin.com/in/aisha-rahman",
-            twitter: "https://twitter.com/aisha_rahman",
-            email: "aisha.rahman@sunnahfoundation.org"
+            linkedin: "https://linkedin.com/in/samira-hassan",
+            twitter: "https://twitter.com/samira_hassan",
+            email: "samira.hassan@sunnahfoundation.org"
           }),
           isLeadership: true
         },
         {
-          name: "Imam Yusuf Ali",
+          name: "Sheikh Dawud Idris",
           title: "Spiritual Advisor",
-          bio: "Renowned scholar with expertise in Hadith sciences and contemporary Islamic thought.",
+          bio: "Renowned Ethiopian scholar with expertise in Fiqh, Hadith sciences, and promoting interfaith dialogue.",
           imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
           socialLinks: JSON.stringify({
-            linkedin: "https://linkedin.com/in/yusuf-ali",
-            twitter: "https://twitter.com/yusuf_ali",
-            email: "yusuf.ali@sunnahfoundation.org"
+            linkedin: "https://linkedin.com/in/dawud-idris",
+            twitter: "https://twitter.com/dawud_idris",
+            email: "dawud.idris@sunnahfoundation.org"
           }),
           isLeadership: true
         },
         {
-          name: "Sarah Hassan",
+          name: "Zainab Mohammed",
           title: "Community Outreach Director",
-          bio: "Dedicated to building bridges between communities through educational initiatives.",
+          bio: "Dedicated to building bridges and fostering development within Ethiopian Muslim communities through educational and social initiatives.",
           imageUrl: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
           socialLinks: JSON.stringify({
-            linkedin: "https://linkedin.com/in/sarah-hassan",
-            twitter: "https://twitter.com/sarah_hassan",
-            email: "sarah.hassan@sunnahfoundation.org"
+            linkedin: "https://linkedin.com/in/zainab-mohammed",
+            twitter: "https://twitter.com/zainab_mohammed",
+            email: "zainab.mohammed@sunnahfoundation.org"
           }),
           isLeadership: true
         }
@@ -405,43 +408,43 @@ async function seed() {
     if (existingCourses.length === 0) {
       await db.insert(schema.universityCourses).values([
         {
-          title: "Bachelor of Arts in Islamic Studies",
-          description: "A comprehensive undergraduate program covering the fundamental Islamic sciences, history, and contemporary applications.",
+          title: "Bachelor of Arts in Islamic Studies (Ethiopian Focus)",
+          description: "A comprehensive undergraduate program covering fundamental Islamic sciences, history, and contemporary applications relevant to Ethiopia.",
           level: "Undergraduate",
           duration: "4 years",
-          instructors: JSON.stringify(["Dr. Ahmad Ibrahim", "Dr. Aisha Rahman", "Imam Yusuf Ali"]),
+          instructors: JSON.stringify(["Dr. Kemal Abubeker", "Dr. Samira Hassan", "Sheikh Dawud Idris"]),
           imageUrl: "https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
         },
         {
-          title: "Master of Arts in Islamic Theology",
-          description: "Advanced study of Islamic theology, philosophy, and comparative religion for scholars and community leaders.",
+          title: "Master of Arts in Islamic Theology & Ethiopian Muslim Heritage",
+          description: "Advanced study of Islamic theology, philosophy, and the rich Muslim heritage of Ethiopia.",
           level: "Graduate",
           duration: "2 years",
-          instructors: JSON.stringify(["Dr. Ahmad Ibrahim", "Dr. Fatima Hasan"]),
+          instructors: JSON.stringify(["Dr. Kemal Abubeker", "Dr. Medina Ismael"]),
           imageUrl: "https://images.unsplash.com/photo-1519682337058-a94d519337bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
         },
         {
-          title: "Diploma in Quranic Sciences",
-          description: "Specialized program focusing on Quranic exegesis, recitation, memorization, and related disciplines.",
+          title: "Diploma in Quranic Sciences & Amharic/Oromo Tafsir",
+          description: "Specialized program focusing on Quranic exegesis, recitation, memorization, with tafsir resources in local languages.",
           level: "Diploma",
           duration: "1 year",
-          instructors: JSON.stringify(["Imam Yusuf Ali", "Shaykh Muhammad Khan"]),
+          instructors: JSON.stringify(["Sheikh Dawud Idris", "Sheikh Nur Hussein"]),
           imageUrl: "https://images.unsplash.com/photo-1584269600519-bdcf7847670b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
         },
         {
-          title: "Certificate in Hadith Studies",
-          description: "In-depth study of prophetic traditions, their authenticity, compilation, and practical application.",
+          title: "Certificate in Hadith Studies & Ethiopian Sanad",
+          description: "In-depth study of prophetic traditions, their authenticity, compilation, and application, including local chains of transmission (sanad).",
           level: "Certificate",
           duration: "6 months",
-          instructors: JSON.stringify(["Dr. Aisha Rahman", "Imam Yusuf Ali"]),
+          instructors: JSON.stringify(["Dr. Samira Hassan", "Sheikh Dawud Idris"]),
           imageUrl: "https://images.unsplash.com/photo-1590596615969-1f070fdc809d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
         },
         {
-          title: "Contemporary Islamic Jurisprudence",
-          description: "Explores the application of Islamic legal principles to modern issues and challenges.",
+          title: "Contemporary Islamic Jurisprudence in the Ethiopian Context",
+          description: "Explores the application of Islamic legal principles to modern issues and challenges facing Ethiopian Muslims.",
           level: "Graduate",
           duration: "1 year",
-          instructors: JSON.stringify(["Dr. Ahmad Ibrahim", "Dr. Zayd Abdullah"]),
+          instructors: JSON.stringify(["Dr. Kemal Abubeker", "Dr. Rashid Usman"]),
           imageUrl: "https://images.unsplash.com/photo-1531158644838-63cb9a38770b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
         }
       ]);
@@ -457,45 +460,45 @@ async function seed() {
     if (existingFaculty.length === 0) {
       await db.insert(schema.facultyMembers).values([
         {
-          name: "Dr. Ahmad Ibrahim",
-          title: "Professor of Islamic Studies",
-          specialization: "Islamic Theology and Philosophy",
-          bio: "Ph.D. from Al-Azhar University with 20 years of experience in academic research and teaching.",
+          name: "Dr. Kemal Abubeker",
+          title: "Professor of Islamic Governance",
+          specialization: "Islamic Political Thought and Ethiopian Muslim History",
+          bio: "Ph.D. from a leading African university with 20 years of experience in academic research, teaching, and community development in Ethiopia.",
           imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         },
         {
-          name: "Dr. Aisha Rahman",
+          name: "Dr. Samira Hassan",
           title: "Associate Professor",
-          specialization: "Hadith Sciences and Women's Studies",
-          bio: "Expert in hadith methodology with special focus on women's narratives in Islamic tradition.",
+          specialization: "Hadith Sciences and Muslim Women's Studies in the Horn of Africa",
+          bio: "Expert in Hadith methodology with a special focus on the narratives and contributions of Muslim women in Ethiopian tradition.",
           imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         },
         {
-          name: "Imam Yusuf Ali",
-          title: "Lecturer",
-          specialization: "Quranic Sciences and Recitation",
-          bio: "Certified Quran teacher with ijazah in multiple modes of recitation and expertise in tafsir.",
+          name: "Sheikh Dawud Idris",
+          title: "Senior Lecturer",
+          specialization: "Quranic Sciences, Recitation (Qira'at), and Ethiopian Tafsir Traditions",
+          bio: "Certified Quran teacher with Ijazah in multiple Qira'at, expertise in Tafsir, and deep knowledge of Ethiopian Islamic scholarly traditions.",
           imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         },
         {
-          name: "Dr. Fatima Hasan",
+          name: "Dr. Medina Ismael",
           title: "Assistant Professor",
-          specialization: "Islamic History and Civilization",
-          bio: "Historian specializing in the Golden Age of Islamic civilization and its contributions to science and humanities.",
+          specialization: "Islamic History and Civilization in East Africa",
+          bio: "Historian specializing in the early Islamic history of Ethiopia and the Horn of Africa, and its contributions to regional culture and scholarship.",
           imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         },
         {
-          name: "Shaykh Muhammad Khan",
+          name: "Sheikh Nur Hussein",
           title: "Instructor",
-          specialization: "Fiqh and Islamic Jurisprudence",
-          bio: "Traditional Islamic scholar with training in multiple schools of Islamic law and contemporary applications.",
+          specialization: "Fiqh (Islamic Jurisprudence) and Usul al-Fiqh in Ethiopian Contexts",
+          bio: "Traditional Islamic scholar with training in multiple schools of Islamic law, focusing on their application within Ethiopian Muslim communities.",
           imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         },
         {
-          name: "Dr. Zayd Abdullah",
+          name: "Dr. Rashid Usman",
           title: "Visiting Professor",
-          specialization: "Contemporary Islamic Thought",
-          bio: "Scholar focusing on Islamic responses to modern philosophical and ethical challenges.",
+          specialization: "Contemporary Islamic Thought and Social Issues in Ethiopia",
+          bio: "Scholar focusing on Islamic responses to modern philosophical, ethical, and social challenges relevant to Ethiopian society.",
           imageUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
         }
       ]);

@@ -18,21 +18,30 @@ let db: ReturnType<typeof drizzleNodePostgres | typeof drizzleNeonServerless>;
 // Consider a different session store for production if this becomes an issue.
 export let pool: PgPool | NeonPool;
 
+// Common SSL configuration
+const sslConfig = process.env.NODE_ENV === 'production' 
+  ? { sslmode: 'require' } // Enforce SSL in production, assuming Aiven requires it.
+  : { rejectUnauthorized: false }; // Allow self-signed certs in dev/test
+
 if (process.env.NODE_ENV === 'development') {
   console.log("Using pg driver for development");
-  pool = new PgPool({ connectionString: process.env.DATABASE_URL });
+  pool = new PgPool({ 
+    connectionString: process.env.DATABASE_URL,
+    ssl: sslConfig 
+  });
   db = drizzleNodePostgres(pool, { schema });
 } else {
   console.log("Using neon serverless driver for production");
-  // Configure Neon WebSocket
   neonConfig.webSocketConstructor = ws;
-  pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+  // For Neon, SSL is typically handled by the connection string or their driver's defaults.
+  // If specific SSL control is needed here, consult Neon's documentation.
+  // The DATABASE_URL for Neon usually includes sslmode=require.
+  pool = new NeonPool({ 
+    connectionString: process.env.DATABASE_URL 
+    // NeonPool might not directly expose 'ssl' like pg.Pool. 
+    // It often relies on the connection string or environment variables.
+  });
   db = drizzleNeonServerless(pool, { schema });
-  // Note: The exported 'pool' here is NeonPool, which might not be ideal
-  // if other parts of the app expect a pg.Pool interface directly,
-  // especially outside the drizzle context (like connect-pg-simple might).
-  // For local dev, the PgPool is correctly used.
-  // Re-evaluate session management for production if using Neon serverless.
 }
 
 export { db }; // Export the configured drizzle instance
